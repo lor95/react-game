@@ -7,17 +7,15 @@ const port = process.env.PORT || 4001;
 const app = express();
 
 const server = http.createServer(app);
-
-const io = socketIo(server,{
-  cors: {
-  }
+const io = socketIo(server, {
+  cors: {},
 });
 
 let interval;
 
 io.on("connection", (socket) => {
   const address = socket.request.connection._peername.address;
-  console.log('New connection from ' + address);
+  console.log("New connection from " + address);
   if (interval) {
     clearInterval(interval);
   }
@@ -28,7 +26,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const getApiAndEmit = socket => {
+const getApiAndEmit = (socket) => {
   const response = new Date();
   // Emitting a new message. Will be consumed by the client
   socket.emit("FromAPI", response);

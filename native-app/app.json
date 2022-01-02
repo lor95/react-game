@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "native-app",
+    "slug": "native-app",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  },
+  "name": "native-app"
+}
