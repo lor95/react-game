@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: express-server
+  labels:
+    app: express-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: express-server
+  template:
+    metadata:
+      labels:
+        run: express-server
+    spec:
+      containers:
+      - name: express-server
+        image: express-server:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 4001
+          name: http
+        command: ["/bin/sh", "-c"]
+        args:
+        - cd src && node index.js;
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: express-server
+spec:
+  type: ClusterIP
+  selector:
+    run: express-server
+  ports:
+  - protocol: TCP
+    port: 4001
+    name: http
+    targetPort: 4001

@@ -12,24 +12,27 @@ const io = socketIo(server, {
 });
 
 let interval;
+const room = "stdroom";
 
 io.on("connection", (socket) => {
   const address = socket.request.connection._peername.address;
-  console.log("New connection from " + address);
+  console.log(`New connection from ${address}`);
+  socket.emit("initialization", `id: ${socket.id}`); // emit message only to connected client
+  socket.join(room); // join room std
   if (interval) {
     clearInterval(interval);
   }
-  interval = setInterval(() => getApiAndEmit(socket), 1000);
+  //interval = setInterval(() => broadCastEmit(socket), 1000);
+  interval = setInterval(() => broadCastEmit(room), 1000);
   socket.on("disconnect", () => {
     console.log("Client disconnected");
     clearInterval(interval);
   });
 });
 
-const getApiAndEmit = (socket) => {
+const broadCastEmit = (room) => {
   const response = new Date();
-  // Emitting a new message. Will be consumed by the client
-  socket.emit("FromAPI", response);
+  io.sockets.in(room).emit("broadcast", response);
 };
 
 server.listen(port, () => console.log(`Listening on port ${port}`));
