@@ -15,9 +15,9 @@ let interval;
 const room = "stdroom";
 
 io.on("connection", (socket) => {
-  const address = socket.request.connection._peername.address;
-  console.log(`New connection from ${address}`);
-  socket.emit("initialization", `id: ${socket.id}`); // emit message only to connected client
+  const clientAddress = socket.handshake.address;
+  console.log(`New connection from ${clientAddress}`);
+  socket.emit("initialization", `client-ip: ${clientAddress}`); // emit message only to connected client
   socket.join(room); // join room std
   if (interval) {
     clearInterval(interval);
@@ -32,7 +32,12 @@ io.on("connection", (socket) => {
 
 const broadCastEmit = (room) => {
   const response = new Date();
-  io.sockets.in(room).emit("broadcast", response);
+  io.sockets
+    .in(room)
+    .emit(
+      "broadcast",
+      `current date: ${response.toLocaleDateString()} ${response.toLocaleTimeString()}`
+    );
 };
 
 server.listen(port, () => console.log(`Listening on port ${port}`));
