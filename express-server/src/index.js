@@ -17,7 +17,7 @@ const room = "stdroom";
 io.on("connection", (socket) => {
   const clientAddress = socket.handshake.address;
   console.log(`New connection from ${clientAddress}`);
-  socket.emit("initialization", `client-ip: ${clientAddress}`); // emit message only to connected client
+  socket.emit("initialization", { socketId: socket.id }); // emit message only to connected client
   socket.join(room); // join room std
   if (interval) {
     clearInterval(interval);
@@ -27,6 +27,12 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Client disconnected");
     clearInterval(interval);
+  });
+  socket.on("player_init", (data) => {
+    console.log(data);
+  });
+  socket.on("player_move", (data) => {
+    console.log(data);
   });
 });
 
