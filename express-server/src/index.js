@@ -32,7 +32,11 @@ io.on("connection", (socket) => {
     gameState[room][socket.id] = data;
   });
   socket.on("player_move", (data) => {
-    console.log(data);
+    Object.keys(gameState[room])
+      .filter((socketId) => socketId != socket.id)
+      .forEach((socketId) =>
+        io.to(socketId).emit("player_moved", { ...data, socketId: socket.id })
+      );
   });
 });
 
