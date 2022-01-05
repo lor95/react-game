@@ -15,12 +15,13 @@ import socketIoClient from "socket.io-client";
 const ENDPOINT = "ws://192.168.1.220:4001";
 
 let keys = {};
+let speed = { x: 0, z: 0, y: 0 };
 const availableColors = ["red", "cyan", "lightblue", "lime", "green", "orange"];
 const color =
   availableColors[Math.floor(Math.random() * availableColors.length)];
 
 const scene = new Scene();
-const geometry = new BoxBufferGeometry(1, 1, 1);
+const geometry = new BoxBufferGeometry(0.7, 0.55, 0.9);
 const material = new MeshBasicMaterial({ color });
 const player = new Mesh(geometry, material);
 const camera = new PerspectiveCamera(75, 1, 0.1, 1000);
@@ -97,16 +98,9 @@ export default function App() {
 
   const movePlayer = (data) => {
     gsap.to(player.position, {
-      duration: 0.09,
+      duration: 0.04,
       x: player.position.x + (data.x || 0),
       z: player.position.z + (data.z || 0),
-      onUpdate: () =>
-        socket.emit("player_move", {
-          position: {
-            x: player.position.x,
-            z: player.position.z,
-          },
-        }),
       onComplete: () =>
         socket.emit("player_move", {
           position: {
@@ -115,8 +109,12 @@ export default function App() {
           },
         }),
     });
+    gsap.to(player.rotation, {
+      duration: 0.02,
+      y: player.rotation.y + (data.y || 0),
+    });
     gsap.to(camera.position, {
-      duration: 0.09,
+      duration: 0.04,
       x: camera.position.x + (data.x || 0),
       z: camera.position.z + (data.z || 0),
     });
@@ -131,15 +129,74 @@ export default function App() {
 
   const moveLogic = () => {
     if (Platform.OS === "web") {
+      const accCoeff = 0.8;
+      const topSpeed = 0.23;
+      const sinAngle = Math.sin(player.rotation.y);
+      const cosAngle = Math.cos(player.rotation.y);
+      let angleQuadrant;
+      if (cosAngle > 0 && sinAngle > 0) angleQuadrant = 1;
+      else if (cosAngle < 0 && sinAngle > 0) angleQuadrant = 2;
+      else if (cosAngle < 0 && sinAngle < 0) angleQuadrant = 3;
+      else if (cosAngle > 0 && sinAngle < 0) angleQuadrant = 4;
+
       if (keys["ArrowUp"] && keys["ArrowLeft"]) {
-        movePlayer({ x: 0.1, z: 0.1 });
+        if (speed.y < 0.1) {
+          speed.y += 0.002;
+        }
       } else if (keys["ArrowUp"] && keys["ArrowRight"]) {
-        movePlayer({ x: -0.1, z: 0.1 });
+        if (speed.y > -0.1) {
+          speed.y -= 0.002;
+        }
       } else if (keys["ArrowUp"]) {
-        movePlayer({ z: 0.18 });
+        if (
+          Math.abs(speed.x) <=
+          Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed
+        ) {
+          let sign = -1;
+          if (
+            angleQuadrant === 1 ||
+            angleQuadrant === 2 ||
+            (!Boolean(angleQuadrant) && sinAngle === 1)
+          ) {
+            sign = 1;
+          }
+          //let desiredAcc = (sign * (accCoeff * Math.abs(sinAngle))) / 100;
+          //if (
+          //  speed.x + desiredAcc <=
+          //  Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed
+          //)
+          //  speed.x += (sign * (accCoeff * Math.abs(sinAngle))) / 100;
+          //else speed.x += 0;
+          speed.x += (sign * (accCoeff * Math.abs(sinAngle))) / 100;
+        }
+        if (
+          Math.abs(speed.z) <=
+          Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed
+        ) {
+          let sign = -1;
+          if (
+            angleQuadrant === 1 ||
+            angleQuadrant === 4 ||
+            (!Boolean(angleQuadrant) && cosAngle === 1)
+          ) {
+            sign = 1;
+          }
+          //let desiredAcc = (sign * (accCoeff * Math.abs(cosAngle))) / 100;
+          //if (
+          //  speed.z + desiredAcc <=
+          //  Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed
+          //)
+          //  speed.z += (sign * (accCoeff * Math.abs(cosAngle))) / 100;
+          //else speed.z += 0;
+          speed.z += (sign * (accCoeff * Math.abs(cosAngle))) / 100;
+        }
       } else if (keys["ArrowDown"]) {
-        movePlayer({ z: -0.18 });
       }
+      console.log(
+        `actual speed: ${Math.sqrt(speed.x * speed.x + speed.z * speed.z)}`
+      );
+      console.log(speed);
+      movePlayer(speed);
     }
   };
 
@@ -171,8 +228,7 @@ export default function App() {
               Math.floor(Math.random() * 5);
 
             player.socketId = socketId;
-            player.position.x = initX;
-            player.position.z = initZ;
+            player.position.set(initX, 0, initZ);
             camera.position.set(initX, 2, initZ - 5);
             camera.lookAt(player.position);
 
@@ -182,7 +238,7 @@ export default function App() {
             const animate = () => {
               setTimeout(function () {
                 requestAnimationFrame(animate);
-              }, 1000 / 60);
+              }, 1000 / 40);
               moveLogic();
               renderer.render(scene, camera);
               gl.endFrameEXP();
