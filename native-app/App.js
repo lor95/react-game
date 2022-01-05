@@ -140,7 +140,9 @@ export default function App() {
     if (Platform.OS === "web") {
       const accCoeff = 0.8;
       const brakeEngine = 0.4;
-      const topSpeed = 0.24;
+      const topSpeed = 0.25;
+      const brakeCoeff = 0.95;
+      const reverseSpeed = 0.10;
       const sinAngle = Math.sin(player.rotation.y);
       const cosAngle = Math.cos(player.rotation.y);
       let angleQuadrant;
@@ -174,15 +176,15 @@ export default function App() {
           if (keys["ArrowUp"].type === "keydown") {
             speed.x += (sign * (accCoeff * Math.abs(sinAngle))) / 100;
             if (
-              speed.x >
+              Math.abs(speed.x) >
               Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed
             ) {
-              speed.x = Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed;
+              speed.x =
+                Math.abs(parseFloat(sinAngle).toFixed(12)) * sign * topSpeed;
             }
           } else if (keys["ArrowUp"].type === "released") {
-            speed.x -=
-              (sign * ((accCoeff - brakeEngine) * Math.abs(sinAngle))) / 100;
-            if (speed.x < 0) {
+            speed.x -= (sign * (brakeEngine * Math.abs(sinAngle))) / 100;
+            if ((speed.x < 0 && sign > 0) || (speed.x > 0 && sign < 0)) {
               speed.x = 0;
             }
           }
@@ -203,20 +205,82 @@ export default function App() {
           if (keys["ArrowUp"].type === "keydown") {
             speed.z += (sign * (accCoeff * Math.abs(cosAngle))) / 100;
             if (
-              speed.z >
+              Math.abs(speed.z) >
               Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed
             ) {
-              speed.z = Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed;
+              speed.z =
+                Math.abs(parseFloat(cosAngle).toFixed(12)) * sign * topSpeed;
             }
           } else if (keys["ArrowUp"].type === "released") {
-            speed.z -=
-              (sign * ((accCoeff - brakeEngine) * Math.abs(cosAngle))) / 100;
-            if (speed.z < 0) {
+            speed.z -= (sign * (brakeEngine * Math.abs(cosAngle))) / 100;
+            if ((speed.z < 0 && sign > 0) || (speed.z > 0 && sign < 0)) {
               speed.z = 0;
             }
           }
         }
       } else if (keys["ArrowDown"]?.pressed) {
+        if (
+          Math.abs(speed.x) <=
+            Math.abs(parseFloat(sinAngle).toFixed(12)) * reverseSpeed &&
+          Math.abs(speed.x) >= 0
+        ) {
+          let sign = 1;
+          if (
+            angleQuadrant === 1 ||
+            angleQuadrant === 2 ||
+            (!Boolean(angleQuadrant) && sinAngle === 1)
+          ) {
+            sign = -1;
+          }
+          if (keys["ArrowDown"].type === "keydown") {
+            speed.x += (sign * (brakeCoeff * Math.abs(sinAngle))) / 100;
+            if (
+              Math.abs(speed.x) >
+              Math.abs(parseFloat(sinAngle).toFixed(12)) * reverseSpeed
+            ) {
+              speed.x =
+                Math.abs(parseFloat(sinAngle).toFixed(12)) *
+                sign *
+                reverseSpeed;
+            }
+          } else if (keys["ArrowDown"].type === "released") {
+            speed.x -= (sign * (brakeEngine * Math.abs(sinAngle))) / 100;
+            if ((speed.x < 0 && sign > 0) || (speed.x > 0 && sign < 0)) {
+              speed.x = 0;
+            }
+          }
+        }
+        if (
+          Math.abs(speed.z) <=
+            Math.abs(parseFloat(cosAngle).toFixed(12)) * reverseSpeed &&
+          Math.abs(speed.z) >= 0
+        ) {
+          let sign = 1;
+          if (
+            angleQuadrant === 1 ||
+            angleQuadrant === 4 ||
+            (!Boolean(angleQuadrant) && cosAngle === 1)
+          ) {
+            sign = -1;
+          }
+          if (keys["ArrowDown"].type === "keydown") {
+            speed.z += (sign * (brakeCoeff * Math.abs(cosAngle))) / 100;
+            if (
+              Math.abs(speed.z) >
+              Math.abs(parseFloat(cosAngle).toFixed(12)) * reverseSpeed
+            ) {
+              speed.z =
+                Math.abs(parseFloat(cosAngle).toFixed(12)) *
+                sign *
+                reverseSpeed;
+            }
+          } else if (keys["ArrowDown"].type === "released") {
+            speed.z -= (sign * (brakeEngine * Math.abs(cosAngle))) / 100;
+            if ((speed.z < 0 && sign > 0) || (speed.z > 0 && sign < 0)) {
+              speed.z = 0;
+            }
+          }
+        }
       }
       console.log(
         `actual speed: ${Math.sqrt(speed.x * speed.x + speed.z * speed.z)}`
@@ -256,6 +320,7 @@ export default function App() {
             player.socketId = socketId;
             player.position.set(initX, 0, initZ);
             camera.position.set(initX, 2, initZ - 5);
+            player.rotation.y = 0;
             camera.lookAt(player.position);
 
             scene.add(player);
