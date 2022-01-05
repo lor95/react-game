@@ -15,6 +15,7 @@ import socketIoClient from "socket.io-client";
 const ENDPOINT = "ws://192.168.1.220:4001";
 
 let keys = {};
+let brakeEngineTimeouts = {};
 let speed = { x: 0, z: 0, y: 0 };
 const availableColors = ["red", "cyan", "lightblue", "lime", "green", "orange"];
 const color =
@@ -122,15 +123,24 @@ export default function App() {
 
   // browser event
   const handleKeyPress = (evt) => {
-    let { code, type } = evt;
-    let isKeyDown = type == "keydown";
-    keys[code] = isKeyDown;
+    const { code, type } = evt;
+    const isKeyDown = type == "keydown";
+    if (isKeyDown) {
+      keys[code] = { pressed: true, type: "keydown" };
+      clearTimeout(brakeEngineTimeouts[code]);
+      brakeEngineTimeouts[code] = setTimeout(() => {
+        keys[code] = { pressed: false, type: "keyup" };
+      }, 2500);
+    } else {
+      keys[code].type = "released";
+    }
   };
 
   const moveLogic = () => {
     if (Platform.OS === "web") {
       const accCoeff = 0.8;
-      const topSpeed = 0.23;
+      const brakeEngine = 0.4;
+      const topSpeed = 0.24;
       const sinAngle = Math.sin(player.rotation.y);
       const cosAngle = Math.cos(player.rotation.y);
       let angleQuadrant;
@@ -139,18 +149,19 @@ export default function App() {
       else if (cosAngle < 0 && sinAngle < 0) angleQuadrant = 3;
       else if (cosAngle > 0 && sinAngle < 0) angleQuadrant = 4;
 
-      if (keys["ArrowUp"] && keys["ArrowLeft"]) {
-        if (speed.y < 0.1) {
-          speed.y += 0.002;
-        }
-      } else if (keys["ArrowUp"] && keys["ArrowRight"]) {
-        if (speed.y > -0.1) {
-          speed.y -= 0.002;
-        }
-      } else if (keys["ArrowUp"]) {
+      if (keys["ArrowUp"]?.pressed && keys["ArrowLeft"]?.pressed) {
+        //if (speed.y < 0.1) {
+        //  speed.y += 0.002;
+        //}
+      } else if (keys["ArrowUp"]?.pressed && keys["ArrowRight"]?.pressed) {
+        //if (speed.y > -0.1) {
+        //  speed.y -= 0.002;
+        //}
+      } else if (keys["ArrowUp"]?.pressed) {
         if (
           Math.abs(speed.x) <=
-          Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed
+            Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed &&
+          Math.abs(speed.x) >= 0
         ) {
           let sign = -1;
           if (
@@ -160,18 +171,26 @@ export default function App() {
           ) {
             sign = 1;
           }
-          //let desiredAcc = (sign * (accCoeff * Math.abs(sinAngle))) / 100;
-          //if (
-          //  speed.x + desiredAcc <=
-          //  Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed
-          //)
-          //  speed.x += (sign * (accCoeff * Math.abs(sinAngle))) / 100;
-          //else speed.x += 0;
-          speed.x += (sign * (accCoeff * Math.abs(sinAngle))) / 100;
+          if (keys["ArrowUp"].type === "keydown") {
+            speed.x += (sign * (accCoeff * Math.abs(sinAngle))) / 100;
+            if (
+              speed.x >
+              Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed
+            ) {
+              speed.x = Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed;
+            }
+          } else if (keys["ArrowUp"].type === "released") {
+            speed.x -=
+              (sign * ((accCoeff - brakeEngine) * Math.abs(sinAngle))) / 100;
+            if (speed.x < 0) {
+              speed.x = 0;
+            }
+          }
         }
         if (
           Math.abs(speed.z) <=
-          Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed
+            Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed &&
+          Math.abs(speed.z) >= 0
         ) {
           let sign = -1;
           if (
@@ -181,16 +200,23 @@ export default function App() {
           ) {
             sign = 1;
           }
-          //let desiredAcc = (sign * (accCoeff * Math.abs(cosAngle))) / 100;
-          //if (
-          //  speed.z + desiredAcc <=
-          //  Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed
-          //)
-          //  speed.z += (sign * (accCoeff * Math.abs(cosAngle))) / 100;
-          //else speed.z += 0;
-          speed.z += (sign * (accCoeff * Math.abs(cosAngle))) / 100;
+          if (keys["ArrowUp"].type === "keydown") {
+            speed.z += (sign * (accCoeff * Math.abs(cosAngle))) / 100;
+            if (
+              speed.z >
+              Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed
+            ) {
+              speed.z = Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed;
+            }
+          } else if (keys["ArrowUp"].type === "released") {
+            speed.z -=
+              (sign * ((accCoeff - brakeEngine) * Math.abs(cosAngle))) / 100;
+            if (speed.z < 0) {
+              speed.z = 0;
+            }
+          }
         }
-      } else if (keys["ArrowDown"]) {
+      } else if (keys["ArrowDown"]?.pressed) {
       }
       console.log(
         `actual speed: ${Math.sqrt(speed.x * speed.x + speed.z * speed.z)}`
@@ -207,7 +233,7 @@ export default function App() {
         <GLView
           style={{ flex: 1 }}
           onContextCreate={(gl) => {
-            scene.add(new GridHelper(1000, 1000));
+            scene.add(new GridHelper(10, 10));
             try {
               gl.canvas = {
                 width: gl.drawingBufferWidth,
