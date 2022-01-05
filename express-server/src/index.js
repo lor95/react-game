@@ -11,39 +11,29 @@ const io = socketIo(server, {
   cors: {},
 });
 
-let interval;
 const room = "stdroom";
+gameState = { stdroom: {} };
 
 io.on("connection", (socket) => {
-  const clientAddress = socket.handshake.address;
-  console.log(`New connection from ${clientAddress}`);
-  socket.emit("initialization", { socketId: socket.id }); // emit message only to connected client
+  console.log(`New connection from ${socket.id}`);
+  socket.emit("initialization", gameState[room]); // emit message only to connected client
   socket.join(room); // join room std
-  if (interval) {
-    clearInterval(interval);
-  }
-  //interval = setInterval(() => broadCastEmit(socket), 1000);
-  interval = setInterval(() => broadCastEmit(room), 1000);
   socket.on("disconnect", () => {
-    console.log("Client disconnected");
-    clearInterval(interval);
+    delete gameState[room][socket.id];
+    io.sockets.in(room).emit("player_despawned", socket.id);
+    console.log(`${socket.id} disconnected`);
   });
   socket.on("player_init", (data) => {
-    console.log(data);
+    Object.keys(gameState[room]).forEach((socketId) =>
+      io
+        .to(socketId)
+        .emit("new_player_spawned", { ...data, socketId: socket.id })
+    );
+    gameState[room][socket.id] = data;
   });
   socket.on("player_move", (data) => {
     console.log(data);
   });
 });
-
-const broadCastEmit = (room) => {
-  const response = new Date();
-  io.sockets
-    .in(room)
-    .emit(
-      "broadcast",
-      `current date: ${response.toLocaleDateString()} ${response.toLocaleTimeString()}`
-    );
-};
 
 server.listen(port, () => console.log(`Listening on port ${port}`));
