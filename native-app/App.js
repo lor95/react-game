@@ -11,7 +11,6 @@ import {
   HemisphereLight,
   MeshLambertMaterial,
   SpotLight,
-  TextureLoader,
   RepeatWrapping,
   sRGBEncoding,
   PlaneBufferGeometry,
@@ -19,7 +18,7 @@ import {
   Fog,
   Color,
 } from "three";
-import { Renderer } from "expo-three";
+import { Renderer, TextureLoader } from "expo-three";
 import { GLView } from "expo-gl";
 //import gsap from "gsap";
 import socketIoClient from "socket.io-client";
@@ -432,7 +431,8 @@ export default function App() {
             const groundTexture = new TextureLoader().load(
               require("./models/ground.png")
             );
-            groundTexture.wrapS = groundTexture.wrapT = RepeatWrapping;
+            groundTexture.wrapS = RepeatWrapping;
+            groundTexture.wrapT = RepeatWrapping;
             groundTexture.repeat.set(10000, 10000);
             groundTexture.anisotropy = 16;
             groundTexture.encoding = sRGBEncoding;
