@@ -23,7 +23,7 @@ const color =
 
 const scene = new Scene();
 const geometry = new BoxBufferGeometry(0.7, 0.55, 0.9);
-const material = new MeshBasicMaterial({ color });
+const material = new MeshBasicMaterial({ color, transparent: false });
 const player = new Mesh(geometry, material);
 const camera = new PerspectiveCamera(75, 1, 0.1, 1000);
 
@@ -55,23 +55,32 @@ export default function App() {
     socket.on("initialization", (playersInRoom) => {
       setError(undefined);
       setSocketId(socket.id);
+      console.log(playersInRoom);
       Object.keys(playersInRoom).forEach((socketId) => {
         const player = playersInRoom[socketId];
-        const material = new MeshBasicMaterial({ color: player.color });
+        const material = new MeshBasicMaterial({
+          color: player.color,
+          transparent: false,
+        });
         const alreadySpawnedPlayer = new Mesh(geometry, material);
         alreadySpawnedPlayer.socketId = socketId;
         alreadySpawnedPlayer.position.x = player.position.x;
         alreadySpawnedPlayer.position.z = player.position.z;
+        alreadySpawnedPlayer.rotation.y = player.rotation.y;
         scene.add(alreadySpawnedPlayer);
       });
     });
     socket.on("new_player_spawned", (player) => {
       if (Boolean(player)) {
-        const material = new MeshBasicMaterial({ color: player.color });
+        const material = new MeshBasicMaterial({
+          color: player.color,
+          transparent: false,
+        });
         const spawnedPlayer = new Mesh(geometry, material);
         spawnedPlayer.socketId = player.socketId;
         spawnedPlayer.position.x = player.position.x;
         spawnedPlayer.position.z = player.position.z;
+        spawnedPlayer.rotation.y = player.rotation.y;
         scene.add(spawnedPlayer);
       }
     });
@@ -86,6 +95,7 @@ export default function App() {
           if (player.socketId === child.socketId) {
             child.position.x = player.position.x;
             child.position.z = player.position.z;
+            child.rotation.y = player.rotation.y;
           }
           return child;
         });
@@ -93,11 +103,19 @@ export default function App() {
     });
     socket.connect();
   }
-  const playerInit = (position, color) => {
-    socket.emit("player_init", { position, color });
+  const playerInit = (position, rotation, color) => {
+    socket.emit("player_init", {
+      position,
+      rotation: { x: rotation.x, y: rotation.y, z: rotation.z },
+      color,
+    });
   };
 
   const movePlayer = (data) => {
+    gsap.to(player.rotation, {
+      duration: 0.02,
+      y: player.rotation.y + (data.y || 0),
+    });
     gsap.to(player.position, {
       duration: 0.04,
       x: player.position.x + (data.x || 0),
@@ -108,11 +126,10 @@ export default function App() {
             x: player.position.x,
             z: player.position.z,
           },
+          rotation: {
+            y: player.rotation.y,
+          },
         }),
-    });
-    gsap.to(player.rotation, {
-      duration: 0.02,
-      y: player.rotation.y + (data.y || 0),
     });
     gsap.to(camera.position, {
       duration: 0.04,
@@ -121,12 +138,35 @@ export default function App() {
     });
   };
 
+  const getOppositeCode = (code) => {
+    let retCode;
+    switch (code) {
+      case "ArrowUp":
+        retCode = "ArrowDown";
+        break;
+      case "ArrowDown":
+        retCode = "ArrowUp";
+        break;
+      case "ArrowLeft":
+        retCode = "ArrowRight";
+        break;
+      case "ArrowRight":
+        retCode = "ArrowLeft";
+        break;
+    }
+    return retCode;
+  };
+
   // browser event
   const handleKeyPress = (evt) => {
     const { code, type } = evt;
     const isKeyDown = type == "keydown";
     if (isKeyDown) {
       keys[code] = { pressed: true, type: "keydown" };
+      if (brakeEngineTimeouts[getOppositeCode(code)]) {
+        clearTimeout(brakeEngineTimeouts[getOppositeCode(code)]);
+        keys[getOppositeCode(code)] = { pressed: false, type: "keyup" };
+      }
       clearTimeout(brakeEngineTimeouts[code]);
       brakeEngineTimeouts[code] = setTimeout(() => {
         keys[code] = { pressed: false, type: "keyup" };
@@ -139,10 +179,10 @@ export default function App() {
   const moveLogic = () => {
     if (Platform.OS === "web") {
       const accCoeff = 0.8;
-      const brakeEngine = 0.4;
+      const brakeEngine = 0.25;
       const topSpeed = 0.25;
       const brakeCoeff = 0.95;
-      const reverseSpeed = 0.10;
+      const reverseSpeed = 0.08;
       const sinAngle = Math.sin(player.rotation.y);
       const cosAngle = Math.cos(player.rotation.y);
       let angleQuadrant;
@@ -150,16 +190,20 @@ export default function App() {
       else if (cosAngle < 0 && sinAngle > 0) angleQuadrant = 2;
       else if (cosAngle < 0 && sinAngle < 0) angleQuadrant = 3;
       else if (cosAngle > 0 && sinAngle < 0) angleQuadrant = 4;
+      let execMove = false;
 
       if (keys["ArrowUp"]?.pressed && keys["ArrowLeft"]?.pressed) {
+        execMove = true;
         //if (speed.y < 0.1) {
         //  speed.y += 0.002;
         //}
       } else if (keys["ArrowUp"]?.pressed && keys["ArrowRight"]?.pressed) {
+        execMove = true;
         //if (speed.y > -0.1) {
         //  speed.y -= 0.002;
         //}
-      } else if (keys["ArrowUp"]?.pressed) {
+      }
+      if (keys["ArrowUp"]?.pressed) {
         if (
           Math.abs(speed.x) <=
             Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed &&
@@ -177,7 +221,8 @@ export default function App() {
             speed.x += (sign * (accCoeff * Math.abs(sinAngle))) / 100;
             if (
               Math.abs(speed.x) >
-              Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed
+                Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed &&
+              Math.sign(speed.x) === sign
             ) {
               speed.x =
                 Math.abs(parseFloat(sinAngle).toFixed(12)) * sign * topSpeed;
@@ -188,6 +233,7 @@ export default function App() {
               speed.x = 0;
             }
           }
+          execMove = true;
         }
         if (
           Math.abs(speed.z) <=
@@ -206,7 +252,8 @@ export default function App() {
             speed.z += (sign * (accCoeff * Math.abs(cosAngle))) / 100;
             if (
               Math.abs(speed.z) >
-              Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed
+                Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed &&
+              Math.sign(speed.z) === sign
             ) {
               speed.z =
                 Math.abs(parseFloat(cosAngle).toFixed(12)) * sign * topSpeed;
@@ -217,11 +264,12 @@ export default function App() {
               speed.z = 0;
             }
           }
+          execMove = true;
         }
       } else if (keys["ArrowDown"]?.pressed) {
         if (
           Math.abs(speed.x) <=
-            Math.abs(parseFloat(sinAngle).toFixed(12)) * reverseSpeed &&
+            Math.abs(parseFloat(sinAngle).toFixed(12)) * topSpeed &&
           Math.abs(speed.x) >= 0
         ) {
           let sign = 1;
@@ -236,7 +284,8 @@ export default function App() {
             speed.x += (sign * (brakeCoeff * Math.abs(sinAngle))) / 100;
             if (
               Math.abs(speed.x) >
-              Math.abs(parseFloat(sinAngle).toFixed(12)) * reverseSpeed
+                Math.abs(parseFloat(sinAngle).toFixed(12)) * reverseSpeed &&
+              Math.sign(speed.x) === sign
             ) {
               speed.x =
                 Math.abs(parseFloat(sinAngle).toFixed(12)) *
@@ -249,10 +298,11 @@ export default function App() {
               speed.x = 0;
             }
           }
+          execMove = true;
         }
         if (
           Math.abs(speed.z) <=
-            Math.abs(parseFloat(cosAngle).toFixed(12)) * reverseSpeed &&
+            Math.abs(parseFloat(cosAngle).toFixed(12)) * topSpeed &&
           Math.abs(speed.z) >= 0
         ) {
           let sign = 1;
@@ -267,7 +317,8 @@ export default function App() {
             speed.z += (sign * (brakeCoeff * Math.abs(cosAngle))) / 100;
             if (
               Math.abs(speed.z) >
-              Math.abs(parseFloat(cosAngle).toFixed(12)) * reverseSpeed
+                Math.abs(parseFloat(cosAngle).toFixed(12)) * reverseSpeed &&
+              Math.sign(speed.z) === sign // this is because reverseSpeed < topSpeed by definition, so it prevents object to instantly go at top reverseSpeed
             ) {
               speed.z =
                 Math.abs(parseFloat(cosAngle).toFixed(12)) *
@@ -280,13 +331,18 @@ export default function App() {
               speed.z = 0;
             }
           }
+          execMove = true;
         }
       }
-      console.log(
-        `actual speed: ${Math.sqrt(speed.x * speed.x + speed.z * speed.z)}`
-      );
-      console.log(speed);
-      movePlayer(speed);
+      //console.log(
+      //  `actual speed: ${Math.sqrt(speed.x * speed.x + speed.z * speed.z)}`
+      //);
+      //console.log(speed);
+      //console.log(keys["ArrowUp"]);
+      //console.log(keys["ArrowDown"]);
+      //console.log(keys["ArrowLeft"]);
+      //console.log(keys["ArrowRight"]);
+      if (execMove) movePlayer(speed);
     }
   };
 
@@ -297,7 +353,7 @@ export default function App() {
         <GLView
           style={{ flex: 1 }}
           onContextCreate={(gl) => {
-            scene.add(new GridHelper(10, 10));
+            scene.add(new GridHelper(10000, 10000));
             try {
               gl.canvas = {
                 width: gl.drawingBufferWidth,
@@ -320,11 +376,9 @@ export default function App() {
             player.socketId = socketId;
             player.position.set(initX, 0, initZ);
             camera.position.set(initX, 2, initZ - 5);
-            player.rotation.y = 0;
             camera.lookAt(player.position);
-
             scene.add(player);
-            playerInit(player.position, color);
+            playerInit(player.position, player.rotation, color);
 
             const animate = () => {
               setTimeout(function () {

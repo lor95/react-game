@@ -37,7 +37,7 @@ io.on("connection", (socket) => {
       .forEach((socketId) =>
         io.to(socketId).emit("player_moved", { ...data, socketId: socket.id })
       );
-    gameState[room][socket.id] = data;
+    gameState[room][socket.id] = { ...gameState[room][socket.id], ...data };
   });
 });
 
