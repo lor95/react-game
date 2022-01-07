@@ -211,22 +211,28 @@ export default function App() {
   const moveLogic = () => {
     if (Platform.OS === "web") {
       const accCoeff = 1.2;
-      const brakeEngine = 0.65;
+      const brakeEngine = 0.35;
+      const terrainGrip = 0.25;
       const topSpeed = 0.35;
       const brakeCoeff = 1.9;
       const reverseSpeed = 0.1;
       const steeringCoeff = 0.05;
-
+      const actualSpeed = Math.sqrt(
+        Math.pow(speed.x, 2) + Math.pow(speed.z, 2)
+      );
+      console.log(actualSpeed);
       let execMove = false;
 
       if (keys["ArrowLeft"]?.pressed && keys["ArrowLeft"]?.type === "keydown") {
-        if (expectedTurn + steeringCoeff <= 0.1) expectedTurn += steeringCoeff;
+        if (expectedTurn + steeringCoeff <= 0.1)
+          expectedTurn += steeringCoeff * (actualSpeed / topSpeed);
       }
       if (
         keys["ArrowRight"]?.pressed &&
         keys["ArrowRight"]?.type === "keydown"
       ) {
-        if (expectedTurn - steeringCoeff >= -0.1) expectedTurn -= steeringCoeff;
+        if (expectedTurn - steeringCoeff >= -0.1)
+          expectedTurn -= steeringCoeff * (actualSpeed / topSpeed);
       }
       if (keys["ArrowUp"]?.pressed || keys["ArrowDown"]?.pressed) {
         speed.y = expectedTurn;
@@ -268,12 +274,12 @@ export default function App() {
                 Math.abs(parseFloat(sinAngle).toFixed(12)) * sign * topSpeed;
             }
           } else if (keys["ArrowUp"].type === "released") {
-            let coeff = brakeEngine;
+            let coeff = brakeEngine + terrainGrip;
             if (
               keys["ArrowDown"]?.pressed &&
               keys["ArrowDown"]?.type === "keydown"
             )
-              coeff = brakeCoeff;
+              coeff = brakeCoeff + terrainGrip;
             speed.x -= (sign * (coeff * Math.abs(sinAngle))) / 100;
             if ((speed.x < 0 && sign > 0) || (speed.x > 0 && sign < 0)) {
               speed.x = 0;
@@ -307,12 +313,12 @@ export default function App() {
                 Math.abs(parseFloat(cosAngle).toFixed(12)) * sign * topSpeed;
             }
           } else if (keys["ArrowUp"].type === "released") {
-            let coeff = brakeEngine;
+            let coeff = brakeEngine + terrainGrip;
             if (
               keys["ArrowDown"]?.pressed &&
               keys["ArrowDown"]?.type === "keydown"
             )
-              coeff = brakeCoeff;
+              coeff = brakeCoeff + terrainGrip;
             speed.z -= (sign * (coeff * Math.abs(cosAngle))) / 100;
             if ((speed.z < 0 && sign > 0) || (speed.z > 0 && sign < 0)) {
               speed.z = 0;
@@ -354,9 +360,9 @@ export default function App() {
                 reverseSpeed;
             }
           } else if (keys["ArrowDown"].type === "released") {
-            let coeff = brakeEngine;
+            let coeff = brakeEngine + terrainGrip;
             if (keys["ArrowUp"]?.pressed && keys["ArrowUp"]?.type === "keydown")
-              coeff = accCoeff;
+              coeff = accCoeff + terrainGrip;
             speed.x -= (sign * (coeff * Math.abs(sinAngle))) / 100;
             if ((speed.x < 0 && sign > 0) || (speed.x > 0 && sign < 0)) {
               speed.x = 0;
@@ -392,9 +398,9 @@ export default function App() {
                 reverseSpeed;
             }
           } else if (keys["ArrowDown"].type === "released") {
-            let coeff = brakeEngine;
+            let coeff = brakeEngine + terrainGrip;
             if (keys["ArrowUp"]?.pressed && keys["ArrowUp"]?.type === "keydown")
-              coeff = accCoeff;
+              coeff = accCoeff + terrainGrip;
             speed.z -= (sign * (coeff * Math.abs(cosAngle))) / 100;
             if ((speed.z < 0 && sign > 0) || (speed.z > 0 && sign < 0)) {
               speed.z = 0;
