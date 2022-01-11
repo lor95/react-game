@@ -1,3 +1,5 @@
+import { Vec3 } from "cannon";
+
 export class Controls {
   #expectedTurn = 0;
   #keys = {};
@@ -84,9 +86,24 @@ export class Controls {
       nextPositionZ !== latestPosition.z ||
       nextRotationY !== latestRotation.y
     ) {
-      this.obj.position.x = nextPositionX;
+      //this.obj.physicBody.velocity.set(data.vx, 0, data.vz);
+      this.obj.physicBody.position.set(
+        nextPositionX,
+        this.obj.position.y,
+        nextPositionZ
+      );
+      this.obj.position.copy(this.obj.physicBody.position);
+      this.obj.physicBody.quaternion.setFromAxisAngle(
+        new Vec3(0, 1, 0),
+        nextRotationY
+      );
+      //this.obj.quaternion.copy(this.obj.physicBody.quaternion);
       this.obj.rotation.y = nextRotationY;
-      this.obj.position.z = nextPositionZ;
+      console.log(this.obj.physicBody.rotation);
+      console.log(this.obj.quaternion);
+      //this.obj.rotation.y = nextRotationY;
+      //this.obj.quaternion.y = nextRotationY;
+      //this.obj.physicBody.quaternion.copy(this.obj.quaternion);
       if (Boolean(this.#socket))
         this.#socket.emit("player_move", {
           position: {
@@ -98,15 +115,12 @@ export class Controls {
           },
         });
     }
-    this.obj.camera.position.x += data.vx || 0;
-    this.obj.camera.position.z += data.vz || 0;
   };
 
   performMove = () => {
     this.obj.actualSpeed = Math.sqrt(
       Math.pow(this.obj.components.vx, 2) + Math.pow(this.obj.components.vz, 2)
     );
-    let execMove = false;
 
     if (
       this.#keys["ArrowLeft"]?.pressed &&
@@ -180,7 +194,6 @@ export class Controls {
             this.obj.components.vx = 0;
           }
         }
-        execMove = true;
       }
       if (
         (Math.abs(this.obj.components.vz) <=
@@ -225,7 +238,6 @@ export class Controls {
             this.obj.components.vz = 0;
           }
         }
-        execMove = true;
       }
       if (this.obj.components.vx === 0 && this.obj.components.vz === 0) {
         clearTimeout(this.#brakeEngineTimeouts["ArrowUp"]);
@@ -277,7 +289,6 @@ export class Controls {
             this.obj.components.vx = 0;
           }
         }
-        execMove = true;
       }
       if (
         (Math.abs(this.obj.components.vz) <=
@@ -323,13 +334,12 @@ export class Controls {
             this.obj.components.vz = 0;
           }
         }
-        execMove = true;
       }
       if (this.obj.components.vx === 0 && this.obj.components.vz === 0) {
         clearTimeout(this.#brakeEngineTimeouts["ArrowDown"]);
         this.#keys["ArrowDown"] = { pressed: false, type: "keyup" };
       }
     }
-    if (execMove) this.#moveObject(this.obj.components);
+    this.#moveObject(this.obj.components);
   };
 }

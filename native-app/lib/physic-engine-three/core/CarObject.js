@@ -10,7 +10,8 @@ export class CarObject extends PhysicObject {
   constructor(color, enableControls = false, isCameraObject = false) {
     super(
       new BoxBufferGeometry(0.7, 0.55, 0.9),
-      new MeshStandardMaterial({ color })
+      new MeshStandardMaterial({ color }),
+      1
     );
     this.enableControls = enableControls;
     this.isCameraObject = isCameraObject;
