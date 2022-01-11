@@ -86,7 +86,6 @@ export class Controls {
       nextPositionZ !== latestPosition.z ||
       nextRotationY !== latestRotation.y
     ) {
-      //this.obj.physicBody.velocity.set(data.vx, 0, data.vz);
       this.obj.physicBody.position.set(
         nextPositionX,
         this.obj.position.y,
@@ -97,13 +96,8 @@ export class Controls {
         new Vec3(0, 1, 0),
         nextRotationY
       );
-      //this.obj.quaternion.copy(this.obj.physicBody.quaternion);
       this.obj.rotation.y = nextRotationY;
-      console.log(this.obj.physicBody.rotation);
-      console.log(this.obj.quaternion);
-      //this.obj.rotation.y = nextRotationY;
-      //this.obj.quaternion.y = nextRotationY;
-      //this.obj.physicBody.quaternion.copy(this.obj.quaternion);
+      this.obj.camera.position.set(nextPositionX, 2, nextPositionZ - 5);
       if (Boolean(this.#socket))
         this.#socket.emit("player_move", {
           position: {

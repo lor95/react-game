@@ -283,29 +283,28 @@ export default function App() {
               boxes.push(boxBody);
               boxMeshes.push(boxMesh);
             }
-            world.addBody(player.physicBody);
 
             scene.fog = new Fog("#87ceeb", 1, 30);
-            scene.background = new Color("#87ceeb");
-            const groundTexture = new TextureLoader().load(
-              require("./resources/textures/ground.png")
-            );
-            groundTexture.wrapS = RepeatWrapping;
-            groundTexture.wrapT = RepeatWrapping;
-            groundTexture.repeat.set(10000, 10000);
-            groundTexture.anisotropy = 16;
-            groundTexture.encoding = sRGBEncoding;
-            const groundMaterial = new MeshStandardMaterial({
-              map: groundTexture,
-            });
-            const groundMesh = new Mesh(
-              new PlaneBufferGeometry(10000, 10000),
-              groundMaterial
-            );
-            groundMesh.position.y = 0;
-            groundMesh.rotation.x = -Math.PI / 2;
-            groundMesh.receiveShadow = true;
-            scene.add(groundMesh);
+            //scene.background = new Color("#87ceeb");
+            //const groundTexture = new TextureLoader().load(
+            //  require("./resources/textures/ground.png")
+            //);
+            //groundTexture.wrapS = RepeatWrapping;
+            //groundTexture.wrapT = RepeatWrapping;
+            //groundTexture.repeat.set(10000, 10000);
+            //groundTexture.anisotropy = 16;
+            //groundTexture.encoding = sRGBEncoding;
+            //const groundMaterial = new MeshStandardMaterial({
+            //  map: groundTexture,
+            //});
+            //const groundMesh = new Mesh(
+            //  new PlaneBufferGeometry(10000, 10000),
+            //  groundMaterial
+            //);
+            //groundMesh.position.y = 0;
+            //groundMesh.rotation.x = -Math.PI / 2;
+            //groundMesh.receiveShadow = true;
+            //scene.add(groundMesh);
 
             var hemilight = new HemisphereLight(0xffeeb1, 0x080820, 1);
             scene.add(hemilight);
@@ -332,60 +331,19 @@ export default function App() {
               gl.drawingBufferWidth / gl.drawingBufferHeight;
             player.camera.updateProjectionMatrix();
 
-            const initX =
-              (Math.round(Math.random()) * 2 - 1) *
-              Math.floor(Math.random() * 5);
-            const initZ =
-              (Math.round(Math.random()) * 2 - 1) *
-              Math.floor(Math.random() * 5);
             player.socketId = socketId;
-            player.position.set(initX, 0.25, initZ);
-            player.camera.position.set(initX, 2, initZ - 5);
-            player.camera.lookAt(player.position);
             scene.add(player);
             playerInit(player.position, player.rotation, player.material.color);
+            world.addBody(player.physicBody);
 
-            //const loader = new MMDLoader();
-
-            //loader.load(
-            //  require("./resources/models/bowl.mdd"),
-            //  (mesh) => {
-            //    mesh.position.x = 0;
-            //    mesh.position.z = 0;
-            //    mesh.position.y = 0;
-            //    debugger;
-            //    scene.add(mesh);
-
-            //helper.add(mesh, {
-            //  //animation: mmd.animation,
-            //  physics: true,
-            //});
-            //
-            //ikHelper = helper.objects.get(mesh).ikSolver.createHelper();
-            //ikHelper.visible = true;
-            //scene.add(ikHelper);
-            //
-            //physicsHelper = helper.objects.get(mesh).physics.createHelper();
-            //physicsHelper.visible = true;
-            //scene.add(physicsHelper);
-            //  },
-            //  null,
-            //  null
-            //);
-
-            const debugRenderer = new CannonDebugRenderer(scene, world);
+            const debugRenderer = new CannonDebugRenderer(scene, world); // debug element
 
             const animate = () => {
               setTimeout(function () {
                 requestAnimationFrame(animate);
-                world.step(1 / 30);
               }, 1000 / 30);
+              world.step(1 / 30);
               //player.position.copy(player.physicBody.position);
-              player.camera.position.set(
-                player.position.x,
-                2,
-                player.position.z - 5
-              );
               //player.quaternion.copy(player.physicBody.quaternion);
               moveLogic();
               for (var i = 0; i < boxes.length; i++) {

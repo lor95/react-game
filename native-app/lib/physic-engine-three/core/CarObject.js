@@ -29,6 +29,8 @@ export class CarObject extends PhysicObject {
     }
     if (isCameraObject) {
       this.camera = new PerspectiveCamera(75, 1, 0.1, 1000);
+      this.camera.position.set(this.position.x, 2, this.position.z - 5);
+      this.camera.lookAt(this.position);
     }
   }
 
