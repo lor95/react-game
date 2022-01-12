@@ -26,7 +26,7 @@ export class PhysicObject extends Mesh {
         )
       )
     );
-    this.physicBody.position.set(this.position);
+    this.physicBody.position.copy(this.position);
     //this.physicBody.angularVelocity.set(0, 10, 0);
     //this.physicBody.angularDamping = 0.5;
   }

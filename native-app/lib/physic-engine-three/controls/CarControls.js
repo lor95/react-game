@@ -4,11 +4,11 @@ export class CarControls {
   #expectedTurn = 0;
   #keys = {};
   #brakeEngineTimeouts = {};
-  #socket = null;
   #obj = null;
 
   constructor(PhysicObject) {
     this.#obj = PhysicObject;
+    this.positionToUpdate = false;
   }
 
   #getControlCodeInfo = (code) => {
@@ -67,9 +67,9 @@ export class CarControls {
     }
   };
 
-  setSocket = (socketToEnable) => {
-    this.#socket = socketToEnable;
-  };
+  //setSocket = (socketToEnable) => {
+  //  this.#socket = socketToEnable;
+  //};
 
   enableBrowserStdControls = () => {
     document.addEventListener("keydown", this.#handleControls);
@@ -92,38 +92,32 @@ export class CarControls {
         this.#obj.position.y,
         nextPositionZ
       );
-      this.#obj.position.copy(this.#obj.physicBody.position);
+      //this.#obj.position.copy(this.#obj.physicBody.position);
       this.#obj.physicBody.quaternion.setFromAxisAngle(
         new Vec3(0, 1, 0),
         nextRotationY
       );
       this.#obj.rotation.y = nextRotationY;
       this.#obj.camera.position.set(nextPositionX, 2, nextPositionZ - 5);
-      if (Boolean(this.#socket))
-        this.#socket.emit("player_move", {
-          position: {
-            x: nextPositionX,
-            z: nextPositionZ,
-          },
-          rotation: {
-            y: nextRotationY,
-          },
-        });
+      this.positionToUpdate = true;
+    } else {
+      this.positionToUpdate = false;
     }
   };
 
   performMove = () => {
     this.#obj.actualSpeed = Math.sqrt(
-      Math.pow(this.#obj.components.vx, 2) + Math.pow(this.#obj.components.vz, 2)
+      Math.pow(this.#obj.components.vx, 2) +
+        Math.pow(this.#obj.components.vz, 2)
     );
-
     if (
       this.#keys["ArrowLeft"]?.pressed &&
       this.#keys["ArrowLeft"]?.type === "keydown"
     ) {
       if (this.#expectedTurn + this.#obj.steeringCoeff <= 0.1)
         this.#expectedTurn +=
-          this.#obj.steeringCoeff * (this.#obj.actualSpeed / this.#obj.topSpeed);
+          this.#obj.steeringCoeff *
+          ((this.#obj.actualSpeed + 0.01) / this.#obj.topSpeed);
     }
     if (
       this.#keys["ArrowRight"]?.pressed &&
@@ -131,11 +125,17 @@ export class CarControls {
     ) {
       if (this.#expectedTurn - this.#obj.steeringCoeff >= -0.1)
         this.#expectedTurn -=
-          this.#obj.steeringCoeff * (this.#obj.actualSpeed / this.#obj.topSpeed);
+          this.#obj.steeringCoeff *
+          ((this.#obj.actualSpeed + 0.01) / this.#obj.topSpeed);
     }
-    if (this.#keys["ArrowUp"]?.pressed || this.#keys["ArrowDown"]?.pressed) {
+    if (
+      (this.#keys["ArrowUp"]?.pressed || this.#keys["ArrowDown"]?.pressed) &&
+      this.#obj.actualSpeed > 0
+    ) {
       this.#obj.components.vy = this.#expectedTurn;
       this.#expectedTurn = 0;
+    } else {
+      this.#obj.components.vy = 0;
     }
     const sinAngle = Math.sin(this.#obj.rotation.y + this.#obj.components.vy);
     const cosAngle = Math.cos(this.#obj.rotation.y + this.#obj.components.vy);
@@ -181,7 +181,8 @@ export class CarControls {
             this.#keys["ArrowDown"]?.type === "keydown"
           )
             coeff = this.#obj.brakeCoeff + this.#obj.tireGrip;
-          this.#obj.components.vx -= (sign * (coeff * Math.abs(sinAngle))) / 100;
+          this.#obj.components.vx -=
+            (sign * (coeff * Math.abs(sinAngle))) / 100;
           if (
             (this.#obj.components.vx < 0 && sign > 0) ||
             (this.#obj.components.vx > 0 && sign < 0)
@@ -225,7 +226,8 @@ export class CarControls {
             this.#keys["ArrowDown"]?.type === "keydown"
           )
             coeff = this.#obj.brakeCoeff + this.#obj.tireGrip;
-          this.#obj.components.vz -= (sign * (coeff * Math.abs(cosAngle))) / 100;
+          this.#obj.components.vz -=
+            (sign * (coeff * Math.abs(cosAngle))) / 100;
           if (
             (this.#obj.components.vz < 0 && sign > 0) ||
             (this.#obj.components.vz > 0 && sign < 0)
@@ -276,7 +278,8 @@ export class CarControls {
             this.#keys["ArrowUp"]?.type === "keydown"
           )
             coeff = this.#obj.accCoeff + this.#obj.tireGrip;
-          this.#obj.components.vx -= (sign * (coeff * Math.abs(sinAngle))) / 100;
+          this.#obj.components.vx -=
+            (sign * (coeff * Math.abs(sinAngle))) / 100;
           if (
             (this.#obj.components.vx < 0 && sign > 0) ||
             (this.#obj.components.vx > 0 && sign < 0)
@@ -321,7 +324,8 @@ export class CarControls {
             this.#keys["ArrowUp"]?.type === "keydown"
           )
             coeff = this.#obj.accCoeff + this.#obj.tireGrip;
-          this.#obj.components.vz -= (sign * (coeff * Math.abs(cosAngle))) / 100;
+          this.#obj.components.vz -=
+            (sign * (coeff * Math.abs(cosAngle))) / 100;
           if (
             (this.#obj.components.vz < 0 && sign > 0) ||
             (this.#obj.components.vz > 0 && sign < 0)

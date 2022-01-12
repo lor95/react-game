@@ -34,10 +34,17 @@ export class CarObject extends PhysicObject {
     }
   }
 
-  enableBrowserStdControls = (socketToEnable) => {
+  enableBrowserStdControls = () => {
     if (this.enableControls) {
-      this.controls.setSocket(socketToEnable);
       this.controls.enableBrowserStdControls();
     }
+  };
+
+  updatePosition = (callback) => {
+    //const temporaryRotation = this.rotation.y;
+    this.position.copy(this.physicBody.position);
+    //this.quaternion.copy(this.physicBody.quaternion);
+    //this.rotation.y = temporaryRotation;
+    callback();
   };
 }
