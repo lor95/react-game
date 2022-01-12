@@ -78,30 +78,24 @@ export class CarControls {
 
   #moveObject = (data) => {
     const latestPosition = this.#obj.position;
-    const latestRotation = this.#obj.rotation;
     const nextPositionX = latestPosition.x + data.vx;
     const nextPositionZ = latestPosition.z + data.vz;
-    const nextRotationY = latestRotation.y + data.vy;
+    const latestYAngle = this.#obj.yAngle;
+    this.#obj.yAngle += data.vy;
     if (
       nextPositionX !== latestPosition.x ||
       nextPositionZ !== latestPosition.z ||
-      nextRotationY !== latestRotation.y
+      this.#obj.yAngle !== latestYAngle
     ) {
       this.#obj.physicBody.position.set(
         nextPositionX,
         this.#obj.position.y,
         nextPositionZ
       );
-      //this.#obj.position.copy(this.#obj.physicBody.position);
       this.#obj.physicBody.quaternion.setFromAxisAngle(
         new Vec3(0, 1, 0),
-        nextRotationY
+        this.#obj.yAngle
       );
-      this.#obj.rotation.y = nextRotationY;
-      this.#obj.camera.position.set(nextPositionX, 2, nextPositionZ - 5);
-      this.positionToUpdate = true;
-    } else {
-      this.positionToUpdate = false;
     }
   };
 
@@ -137,8 +131,8 @@ export class CarControls {
     } else {
       this.#obj.components.vy = 0;
     }
-    const sinAngle = Math.sin(this.#obj.rotation.y + this.#obj.components.vy);
-    const cosAngle = Math.cos(this.#obj.rotation.y + this.#obj.components.vy);
+    const sinAngle = Math.sin(this.#obj.yAngle + this.#obj.components.vy);
+    const cosAngle = Math.cos(this.#obj.yAngle + this.#obj.components.vy);
     let angleQuadrant;
     if (cosAngle > 0 && sinAngle > 0) angleQuadrant = 1;
     else if (cosAngle < 0 && sinAngle > 0) angleQuadrant = 2;

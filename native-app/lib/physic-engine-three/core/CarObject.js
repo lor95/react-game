@@ -7,12 +7,22 @@ import {
 } from "three";
 
 export class CarObject extends PhysicObject {
-  constructor(color, enableControls = false, isCameraObject = false) {
+  constructor(
+    position,
+    yAngle,
+    mass,
+    color,
+    enableControls = false,
+    isCameraObject = false
+  ) {
     super(
       new BoxBufferGeometry(0.7, 0.55, 0.9),
       new MeshStandardMaterial({ color }),
-      1
+      position,
+      yAngle,
+      mass
     );
+    this.yAngle = yAngle;
     this.enableControls = enableControls;
     this.isCameraObject = isCameraObject;
     if (enableControls) {
@@ -41,10 +51,9 @@ export class CarObject extends PhysicObject {
   };
 
   updatePosition = (callback) => {
-    //const temporaryRotation = this.rotation.y;
     this.position.copy(this.physicBody.position);
-    //this.quaternion.copy(this.physicBody.quaternion);
-    //this.rotation.y = temporaryRotation;
+    this.quaternion.copy(this.physicBody.quaternion);
+    this.camera.position.set(this.position.x, 2, this.position.z - 5);
     callback();
   };
 }

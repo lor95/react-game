@@ -54,6 +54,13 @@ const defaultColors = [
 const scene = new Scene();
 const world = new World();
 const player = new CarObject(
+  {
+    x: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 5),
+    y: 0.29,
+    z: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 5),
+  },
+  0,
+  1,
   defaultColors[Math.floor(Math.random() * defaultColors.length)],
   true,
   true
@@ -83,18 +90,14 @@ export default function App() {
       setSocketId(socket.id);
       Object.keys(playersInRoom).forEach((socketId) => {
         const _player = playersInRoom[socketId];
-        const alreadySpawnedPlayer = new CarObject(player.color);
+        const alreadySpawnedPlayer = new CarObject(
+          _player.position,
+          _player.yAngle,
+          1,
+          _player.color
+        );
         alreadySpawnedPlayer.socketId = socketId;
         alreadySpawnedPlayer.physicBody.socketId = socketId;
-        alreadySpawnedPlayer.position.set(
-          _player.position.x,
-          0.29,
-          _player.position.z
-        );
-        alreadySpawnedPlayer.physicBody.position.copy(
-          alreadySpawnedPlayer.position
-        );
-        //alreadySpawnedPlayer.rotation.y = _player.rotation.y;
         alreadySpawnedPlayer.castShadow = true;
         alreadySpawnedPlayer.receiveShadow = true;
         world.addBody(alreadySpawnedPlayer.physicBody);
@@ -103,12 +106,14 @@ export default function App() {
     });
     socket.on("new_player_spawned", (player) => {
       if (Boolean(player)) {
-        const spawnedPlayer = new CarObject(player.color);
+        const spawnedPlayer = new CarObject(
+          player.position,
+          player.yAngle,
+          1,
+          player.color
+        );
         spawnedPlayer.socketId = player.socketId;
-        spawnedPlayer.physicBody.socketId = player.sockerId;
-        spawnedPlayer.position.set(player.position.x, 0.29, player.position.z);
-        spawnedPlayer.physicBody.position.copy(spawnedPlayer.position);
-        //spawnedPlayer.rotation.y = player.rotation.y;
+        spawnedPlayer.physicBody.socketId = player.socketId;
         spawnedPlayer.castShadow = true;
         spawnedPlayer.receiveShadow = true;
         world.addBody(spawnedPlayer.physicBody);
@@ -125,10 +130,19 @@ export default function App() {
       if (Boolean(player)) {
         scene.children = scene.children.map((child) => {
           if (player.socketId === child.socketId) {
-            child.position.x = player.position.x;
-            child.position.z = player.position.z;
-            child.physicBody.position.copy(child.position);
-            child.rotation.y = player.rotation.y;
+            child.physicBody.position.set(
+              player.position.x,
+              player.position.y,
+              player.position.z
+            );
+            child.position.copy(child.physicBody.position);
+            child.physicBody.quaternion.set(
+              player.quaternion.x,
+              player.quaternion.y,
+              player.quaternion.z,
+              player.quaternion.w
+            );
+            child.quaternion.copy(child.physicBody.quaternion);
           }
           return child;
         });
@@ -137,10 +151,11 @@ export default function App() {
     socket.connect();
   }
 
-  const playerInit = (position, rotation, color) => {
+  const playerInit = (position, quaternion, yAngle, color) => {
     socket.emit("player_init", {
       position,
-      rotation: { x: rotation.x, y: rotation.y, z: rotation.z },
+      quaternion,
+      yAngle,
       color,
     });
   };
@@ -268,7 +283,13 @@ export default function App() {
 
             player.socketId = socketId;
             scene.add(player);
-            playerInit(player.position, player.rotation, player.material.color);
+
+            playerInit(
+              player.position,
+              player.quaternion,
+              player.yAngle,
+              player.material.color
+            );
             world.addBody(player.physicBody);
 
             const debugRenderer = new CannonDebugRenderer(scene, world); // debug element
@@ -278,21 +299,21 @@ export default function App() {
                 requestAnimationFrame(animate);
                 world.step(1 / 30);
               }, 1000 / 30);
-              //player.position.copy(player.physicBody.position);
-              //player.quaternion.copy(player.physicBody.quaternion);
               moveLogic();
               player.updatePosition(() => {
-                if (player.controls.positionToUpdate) {
-                  socket.emit("player_move", {
-                    position: {
-                      x: player.position.x,
-                      z: player.position.z,
-                    },
-                    rotation: {
-                      y: player.rotation.y,
-                    },
-                  });
-                }
+                socket.emit("player_move", {
+                  position: {
+                    x: player.position.x,
+                    y: player.position.y,
+                    z: player.position.z,
+                  },
+                  quaternion: {
+                    x: player.quaternion.x,
+                    y: player.quaternion.y,
+                    z: player.quaternion.z,
+                    w: player.quaternion.w,
+                  },
+                });
               });
               //for (var i = 0; i < boxes.length; i++) {
               //  boxMeshes[i].position.copy(boxes[i].position);
