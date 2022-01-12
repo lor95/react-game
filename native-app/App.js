@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { SOCKET_ENDPOINT } from "./config/socketConfig";
 import { View, Text, Platform, TouchableWithoutFeedback } from "react-native";
 import {
   Scene,
@@ -35,13 +36,11 @@ import {
   Material,
   ContactMaterial,
 } from "cannon";
-import { default as CannonDebugRenderer } from "./lib/debug/CannonDebugRenderer";
+import { default as CannonDebugRenderer } from "./lib/physic-engine-three/debug/CannonDebugRenderer";
 import { CarObject } from "./lib/physic-engine-three/core";
 import { Renderer, TextureLoader } from "expo-three";
 import { GLView } from "expo-gl";
 import socketIoClient from "socket.io-client";
-
-const ENDPOINT = "ws://192.168.1.220:4001";
 
 const defaultColors = [
   "#ff6666",
@@ -66,7 +65,7 @@ export default function App() {
   const [socket, setSocket] = useState(undefined);
 
   useEffect(() => {
-    const socket_ = socketIoClient(ENDPOINT, {
+    const socket_ = socketIoClient(SOCKET_ENDPOINT, {
       forceNode: true,
       autoConnect: false,
       reconnection: false,

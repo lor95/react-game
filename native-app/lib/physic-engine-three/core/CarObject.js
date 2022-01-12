@@ -1,5 +1,5 @@
 import { PhysicObject } from ".";
-import { Controls } from "../controls/Controls";
+import { CarControls } from "../controls/CarControls";
 import {
   BoxBufferGeometry,
   MeshStandardMaterial,
@@ -25,7 +25,7 @@ export class CarObject extends PhysicObject {
       this.steeringCoeff = 0.05;
       this.actualSpeed = 0;
       this.components = { vx: 0, vy: 0, vz: 0 };
-      this.controls = new Controls(this);
+      this.controls = new CarControls(this);
     }
     if (isCameraObject) {
       this.camera = new PerspectiveCamera(75, 1, 0.1, 1000);
