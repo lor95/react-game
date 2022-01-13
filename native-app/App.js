@@ -66,6 +66,7 @@ const player = new CarObject(
   true
 );
 player.enableBrowserStdControls();
+scene.add(player.forwardArrow);
 
 export default function App() {
   const [error, setError] = useState(undefined);

@@ -87,11 +87,12 @@ export class CarControls {
       nextPositionZ !== latestPosition.z ||
       this.#obj.yAngle !== latestYAngle
     ) {
-      this.#obj.physicBody.position.set(
-        nextPositionX,
-        this.#obj.position.y,
-        nextPositionZ
-      );
+      this.#obj.translateZ(Math.sqrt(data.vx * data.vx + data.vz * data.vz));
+      //this.#obj.physicBody.position.set(
+      //  nextPositionX,
+      //  this.#obj.position.y,
+      //  nextPositionZ
+      //);
       this.#obj.physicBody.quaternion.setFromAxisAngle(
         new Vec3(0, 1, 0),
         this.#obj.yAngle
