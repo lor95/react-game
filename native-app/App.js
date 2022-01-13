@@ -174,6 +174,8 @@ export default function App() {
         <GLView
           style={{ flex: 1 }}
           onContextCreate={(gl) => {
+            scene.add(new GridHelper(1000, 1000));
+
             world.quatNormalizeSkip = 0;
             world.quatNormalizeFast = false;
 

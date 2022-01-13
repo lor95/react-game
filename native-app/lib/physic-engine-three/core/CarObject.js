@@ -42,14 +42,15 @@ export class CarObject extends PhysicObject {
     this.enableControls = enableControls;
     this.isCameraObject = isCameraObject;
     if (enableControls) {
-      this.accCoeff = 1.2;
-      this.brakeEngine = 0.35;
+      this.accCoeff = 0.02;
+      this.brakeEngine = 0.008;
       this.tireGrip = 0.25;
       this.topSpeed = 0.35;
-      this.brakeCoeff = 1.9;
+      this.brakeCoeff = 0.05;
       this.reverseSpeed = 0.1;
       this.steeringCoeff = 0.05;
       this.actualSpeed = 0;
+      this.isReverse = false;
       this.components = { vx: 0, vy: 0, vz: 0 };
       this.forwardArrow = new ArrowHelper(
         new Vector3(0, 0, 1).normalize(),
