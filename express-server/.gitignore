@@ -2,3 +2,4 @@
 /node_modules
 express-server.*
 yarn-error.log
+.DS_Store

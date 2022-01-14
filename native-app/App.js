@@ -67,6 +67,7 @@ const player = new CarObject(
 );
 player.enableBrowserStdControls();
 scene.add(player.forwardArrow);
+scene.add(player.upArrow)
 
 export default function App() {
   const [error, setError] = useState(undefined);
@@ -99,8 +100,6 @@ export default function App() {
         );
         alreadySpawnedPlayer.socketId = socketId;
         alreadySpawnedPlayer.physicBody.socketId = socketId;
-        alreadySpawnedPlayer.castShadow = true;
-        alreadySpawnedPlayer.receiveShadow = true;
         world.addBody(alreadySpawnedPlayer.physicBody);
         scene.add(alreadySpawnedPlayer);
       });
@@ -115,8 +114,6 @@ export default function App() {
         );
         spawnedPlayer.socketId = player.socketId;
         spawnedPlayer.physicBody.socketId = player.socketId;
-        spawnedPlayer.castShadow = true;
-        spawnedPlayer.receiveShadow = true;
         world.addBody(spawnedPlayer.physicBody);
         scene.add(spawnedPlayer);
       }

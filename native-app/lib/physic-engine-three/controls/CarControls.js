@@ -1,5 +1,5 @@
 import { Vec3 } from "cannon";
-
+import { Vector3, Euler } from "three";
 export class CarControls {
   #expectedTurn = 0;
   #keys = {};
@@ -87,23 +87,32 @@ export class CarControls {
     //  nextPositionZ !== latestPosition.z ||
     //  this.#obj.yAngle !== latestYAngle
     //) {
-    this.#obj.translateZ(this.#obj.actualSpeed);
+    this.#obj.physicBody.position.copy(this.#obj.position);
+    this.#obj.physicBody.quaternion.copy(this.#obj.quaternion);
     //this.#obj.physicBody.position.set(
     //  nextPositionX,
     //  this.#obj.position.y,
     //  nextPositionZ
     //);
-    this.#obj.physicBody.quaternion.setFromAxisAngle(
-      new Vec3(0, 1, 0),
-      this.#obj.yAngle
-    );
+    //this.#obj.physicBody.quaternion.setFromAxisAngle(
+    //  new Vec3(0, 1, 0),
+    //  this.#obj.yAngle
+    //);
     //}
   };
 
   performMove = () => {
-    console.log(this.#keys["ArrowUp"]);
-    console.log(this.#keys["ArrowDown"]);
+    let toMod = false;
+    if (this.#keys["ArrowLeft"]?.pressed) {
+      this.#obj.rotateOnAxis(new Vector3(0, 1, 0), 0.02);
+      toMod = true;
+    }
+    if (this.#keys["ArrowRight"]?.pressed) {
+      this.#obj.rotateOnAxis(new Vector3(0, 1, 0), -0.02);
+      toMod = true;
+    }
     if (this.#keys["ArrowUp"]?.pressed) {
+      toMod = true;
       if (this.#keys["ArrowUp"]?.type === "keydown") {
         if (
           !this.#keys["ArrowDown"]?.pressed ||
@@ -113,13 +122,22 @@ export class CarControls {
             this.#obj.actualSpeed + this.#obj.accCoeff <=
             this.#obj.topSpeed
           ) {
-            this.#obj.actualSpeed += this.#obj.accCoeff; // acceleration
+            if (this.#obj.actualSpeed < 0) {
+              this.#obj.actualSpeed += this.#obj.accCoeff * this.#obj.tireGrip; // wheelspin
+            } else {
+              clearTimeout(this.#brakeEngineTimeouts["ArrowDown"]);
+              this.#keys["ArrowDown"] = { pressed: false, type: "keyup" };
+              this.#obj.actualSpeed += this.#obj.accCoeff;
+            } // acceleration
           } else {
             this.#obj.actualSpeed = this.#obj.topSpeed; // max speed reached
           }
         }
       } else if (this.#keys["ArrowUp"]?.type === "released") {
-        if (!this.#keys["ArrowDown"]?.pressed) {
+        if (
+          !this.#keys["ArrowDown"]?.pressed ||
+          this.#keys["ArrowDown"]?.type === "released"
+        ) {
           if (this.#obj.actualSpeed - this.#obj.brakeEngine >= 0) {
             this.#obj.actualSpeed -= this.#obj.brakeEngine; // acc pedal is up and brake pedal is up
           } else {
@@ -128,7 +146,6 @@ export class CarControls {
             this.#obj.actualSpeed = 0;
           }
         } else if (this.#keys["ArrowDown"]?.type === "keydown") {
-          // TODO check if this.#obj.actualSpeed is < 0 (wheelspin)
           if (this.#obj.actualSpeed - this.#obj.brakeCoeff >= 0) {
             this.#obj.actualSpeed -= this.#obj.brakeCoeff; // braking with no acc pedal down
           } else {
@@ -139,13 +156,29 @@ export class CarControls {
         }
       }
     } else if (this.#keys["ArrowDown"]?.pressed) {
-      if(this.#keys["ArrowDown"]?.type === "keydown") {
+      toMod = true;
+      if (this.#keys["ArrowDown"]?.type === "keydown") {
+        if (
+          this.#obj.actualSpeed - this.#obj.accCoeff >=
+          this.#obj.topReverseSpeed
+        ) {
+          this.#obj.actualSpeed -= this.#obj.accCoeff;
+        } else {
+          this.#obj.actualSpeed = this.#obj.topReverseSpeed;
+        }
         // reverse acceleration
       } else {
         // slowly stop
+        if (this.#obj.actualSpeed + this.#obj.brakeEngine <= 0) {
+          this.#obj.actualSpeed += this.#obj.brakeEngine; // reverse pedal is up and brake pedal is up
+        } else {
+          clearTimeout(this.#brakeEngineTimeouts["ArrowDown"]);
+          this.#keys["ArrowDown"] = { pressed: false, type: "keyup" }; // vehicle stop with brake engine; acc pedal is definitely up
+          this.#obj.actualSpeed = 0;
+        }
       }
     }
-    this.#moveObject(this.#obj.actualSpeed);
+    if (toMod) this.#moveObject(this.#obj.actualSpeed);
   };
 
   //performMove = () => {
