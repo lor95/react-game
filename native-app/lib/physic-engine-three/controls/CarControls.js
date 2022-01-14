@@ -87,6 +87,7 @@ export class CarControls {
     //  nextPositionZ !== latestPosition.z ||
     //  this.#obj.yAngle !== latestYAngle
     //) {
+    this.#obj.translateZ(this.#obj.actualSpeed);
     this.#obj.physicBody.position.copy(this.#obj.position);
     this.#obj.physicBody.quaternion.copy(this.#obj.quaternion);
     //this.#obj.physicBody.position.set(

@@ -2,6 +2,7 @@ import { PhysicObject } from ".";
 import { CarControls } from "../controls/CarControls";
 import {
   BoxBufferGeometry,
+  BoxGeometry,
   MeshStandardMaterial,
   PerspectiveCamera,
   ArrowHelper,
@@ -32,7 +33,7 @@ export class CarObject extends PhysicObject {
     isCameraObject = false
   ) {
     super(
-      new BoxBufferGeometry(0.7, 0.55, 0.9),
+      new BoxGeometry(0.7, 0.55, 0.9),
       new MeshStandardMaterial({ color }),
       position,
       yAngle,
@@ -40,6 +41,7 @@ export class CarObject extends PhysicObject {
     );
     this.enableControls = enableControls;
     this.isCameraObject = isCameraObject;
+    this.yAngle = yAngle
     if (enableControls) {
       this.topSpeed = 0.35;
       this.topReverseSpeed = -0.1;
@@ -97,7 +99,7 @@ export class CarObject extends PhysicObject {
     )
     this.upArrow.position.copy(this.position)
 
-    //this.position.copy(this.physicBody.position);
+    this.position.copy(this.physicBody.position);
     this.quaternion.copy(this.physicBody.quaternion)
     this.camera.position.set(this.position.x, 2, this.position.z - 5);
     callback();
