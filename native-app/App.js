@@ -171,24 +171,16 @@ export default function App() {
         <GLView
           style={{ flex: 1 }}
           onContextCreate={(gl) => {
+
             scene.add(new GridHelper(1000, 1000));
 
             world.quatNormalizeSkip = 0;
             world.quatNormalizeFast = false;
-
-            var solver = new GSSolver();
-
-            world.defaultContactMaterial.contactEquationStiffness = 1e9;
+            world.defaultContactMaterial.contactEquationStiffness = 1e128;
             world.defaultContactMaterial.contactEquationRelaxation = 4;
-
-            solver.iterations = 7;
-            solver.tolerance = 0.1;
-            var split = true;
-            if (split) world.solver = new SplitSolver(solver);
-            else world.solver = solver;
-
-            world.gravity.set(0, -9, 0);
-            world.broadphase = new NaiveBroadphase();
+            world.gravity.set(0, -9.82, 0);
+            world.solver.iterations = 20;
+            world.solver.tolerance = 0.0;
 
             // Create a slippery material (friction coefficient = 0.0)
             var physicsMaterial = new Material("slipperyMaterial");
@@ -235,6 +227,7 @@ export default function App() {
             //}
 
             scene.fog = new Fog("#87ceeb", 1, 30);
+
             //scene.background = new Color("#87ceeb");
             //const groundTexture = new TextureLoader().load(
             //  require("./resources/textures/ground.png")
@@ -272,6 +265,7 @@ export default function App() {
                 height: gl.drawingBufferHeight,
               };
             } catch {}
+            
             const renderer = new Renderer({ gl });
 
             renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);

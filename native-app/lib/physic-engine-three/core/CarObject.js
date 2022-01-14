@@ -1,7 +1,6 @@
 import { PhysicObject } from ".";
 import { CarControls } from "../controls/CarControls";
 import {
-  BoxBufferGeometry,
   BoxGeometry,
   MeshStandardMaterial,
   PerspectiveCamera,
@@ -9,24 +8,10 @@ import {
   Euler,
   Vector3,
 } from "three";
-
-//function getAxisAndAngelFromQuaternion(q) {
-//  const angle = 2 * Math.acos(q.w);
-//  var s;
-//  if (1 - q.w * q.w < 0.000001) {
-//    // test to avoid divide by zero, s is always positive due to sqrt
-//    // if s close to zero then direction of axis not important
-//    // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/
-//    s = 1;
-//  } else {
-//    s = Math.sqrt(1 - q.w * q.w);
-//  }
-//  return { axis: new Vector3(q.x / s, q.y / s, q.z / s), angle };
-//}
 export class CarObject extends PhysicObject {
   constructor(
     position,
-    yAngle,
+    quaternion,
     mass,
     color,
     enableControls = false,
@@ -36,12 +21,12 @@ export class CarObject extends PhysicObject {
       new BoxGeometry(0.7, 0.55, 0.9),
       new MeshStandardMaterial({ color }),
       position,
-      yAngle,
+      quaternion,
       mass
     );
+
     this.enableControls = enableControls;
     this.isCameraObject = isCameraObject;
-    this.yAngle = yAngle
     if (enableControls) {
       this.topSpeed = 0.35;
       this.topReverseSpeed = -0.1;
@@ -51,7 +36,6 @@ export class CarObject extends PhysicObject {
       this.brakeEngine = 0.008;
       this.tireGrip = 0.75; // percentage
       this.steeringCoeff = 0.05;
-      //this.components = { vx: 0, vy: 0, vz: 0 };
       this.forwardArrow = new ArrowHelper(
         new Vector3(0, 0, 1).normalize(),
         new Vector3(this.position.x, this.position.y, this.position.z),
@@ -101,6 +85,7 @@ export class CarObject extends PhysicObject {
 
     this.position.copy(this.physicBody.position);
     this.quaternion.copy(this.physicBody.quaternion)
+    
     this.camera.position.set(this.position.x, 2, this.position.z - 5);
     callback();
   };

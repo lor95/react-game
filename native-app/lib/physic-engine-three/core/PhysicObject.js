@@ -8,9 +8,7 @@ export class PhysicObject extends Mesh {
     this.receiveShadow = true;
     this.physicBody = new Body({
       mass,
-    });
-    this.physicBody.addShape(
-      new Box(
+      shape: new Box(
         new Vec3(
           geometry.parameters.width * 0.5,
           geometry.parameters.height * 0.5,
@@ -20,7 +18,7 @@ export class PhysicObject extends Mesh {
           //0.5
         )
       )
-    );
+    });
     this.physicBody.position.set(position.x, position.y, position.z);
     this.position.copy(this.physicBody.position);
     this.physicBody.quaternion.set(
