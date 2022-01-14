@@ -41,6 +41,7 @@ import { CarObject } from "./lib/physic-engine-three/core";
 import { Renderer, TextureLoader } from "expo-three";
 import { GLView } from "expo-gl";
 import socketIoClient from "socket.io-client";
+import { Quaternion } from "three";
 
 const defaultColors = [
   "#ff6666",
@@ -59,7 +60,7 @@ const player = new CarObject(
     y: 0.29,
     z: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 5),
   },
-  0,
+  new Quaternion(),
   1,
   defaultColors[Math.floor(Math.random() * defaultColors.length)],
   true,
@@ -94,7 +95,7 @@ export default function App() {
         const _player = playersInRoom[socketId];
         const alreadySpawnedPlayer = new CarObject(
           _player.position,
-          _player.yAngle,
+          _player.quaternion,
           1,
           _player.color
         );
@@ -108,7 +109,7 @@ export default function App() {
       if (Boolean(player)) {
         const spawnedPlayer = new CarObject(
           player.position,
-          player.yAngle,
+          player.quaternion,
           1,
           player.color
         );
@@ -135,10 +136,10 @@ export default function App() {
             );
             child.position.copy(child.physicBody.position);
             child.physicBody.quaternion.set(
-              player.quaternion.x,
-              player.quaternion.y,
-              player.quaternion.z,
-              player.quaternion.w
+              player.quaternion._x,
+              player.quaternion._y,
+              player.quaternion._z,
+              player.quaternion._w
             );
             child.quaternion.copy(child.physicBody.quaternion);
           }
@@ -149,11 +150,10 @@ export default function App() {
     socket.connect();
   }
 
-  const playerInit = (position, quaternion, yAngle, color) => {
+  const playerInit = (position, quaternion, color) => {
     socket.emit("player_init", {
       position,
       quaternion,
-      yAngle,
       color,
     });
   };
@@ -287,7 +287,6 @@ export default function App() {
             playerInit(
               player.position,
               player.quaternion,
-              player.yAngle,
               player.material.color
             );
             world.addBody(player.physicBody);
@@ -308,10 +307,10 @@ export default function App() {
                     z: player.position.z,
                   },
                   quaternion: {
-                    x: player.quaternion.x,
-                    y: player.quaternion.y,
-                    z: player.quaternion.z,
-                    w: player.quaternion.w,
+                    _x: player.quaternion._x,
+                    _y: player.quaternion._y,
+                    _z: player.quaternion._z,
+                    _w: player.quaternion._w,
                   },
                 });
               });
