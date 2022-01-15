@@ -1,5 +1,5 @@
 import { PhysicObject } from ".";
-import { CarControls } from "../controls/CarControls";
+import { SimpleCarControls } from "../controls/SimpleCarControls";
 import {
   BoxGeometry,
   MeshStandardMaterial,
@@ -7,8 +7,24 @@ import {
   ArrowHelper,
   Euler,
   Vector3,
+  Raycaster,
 } from "three";
-export class CarObject extends PhysicObject {
+import { Vec3 } from "cannon";
+
+//const rays = [
+//  new Vector3(0, 0, 1),
+//  new Vector3(1, 0, 1),
+//  new Vector3(1, 0, 0),
+//  new Vector3(1, 0, -1),
+//  new Vector3(0, 0, -1),
+//  new Vector3(-1, 0, -1),
+//  new Vector3(-1, 0, 0),
+//  new Vector3(-1, 0, 1),
+//];
+//
+//const caster = new Raycaster();
+
+export class SimpleCarObject extends PhysicObject {
   constructor(
     position,
     quaternion,
@@ -28,7 +44,7 @@ export class CarObject extends PhysicObject {
     this.enableControls = enableControls;
     this.isCameraObject = isCameraObject;
     if (enableControls) {
-      this.topSpeed = 0.35;
+      this.topSpeed = 0.25;
       this.topReverseSpeed = -0.1;
       this.actualSpeed = 0;
       this.accCoeff = 0.012;
@@ -48,7 +64,7 @@ export class CarObject extends PhysicObject {
         2,
         "#0000ff"
       );
-      this.controls = new CarControls(this);
+      this.controls = new SimpleCarControls(this);
     }
     if (isCameraObject) {
       this.camera = new PerspectiveCamera(75, 1, 0.1, 1000);
@@ -63,7 +79,15 @@ export class CarObject extends PhysicObject {
     }
   };
 
-  updatePosition = (callback) => {
+  updatePosition = (/*objects, */ callback) => {
+    //var collisions, i;
+    //for (i = 0; i < rays.length; i += 1) {
+    //  caster.set(this.position, rays[i]);
+    //  collisions = caster.intersectObjects(objects);
+    //}
+    //console.log(collisions);
+    //this.physicBody.applyForce(new Vec3(1999,9,9))
+
     this.forwardArrow.setDirection(
       new Vector3(0, 0, 1)
         .applyEuler(
@@ -80,12 +104,12 @@ export class CarObject extends PhysicObject {
           new Euler(this.rotation.x, this.rotation.y, this.rotation.z, "XYZ")
         )
         .normalize()
-    )
-    this.upArrow.position.copy(this.position)
+    );
+    this.upArrow.position.copy(this.position);
 
     this.position.copy(this.physicBody.position);
-    this.quaternion.copy(this.physicBody.quaternion)
-    
+    this.quaternion.copy(this.physicBody.quaternion);
+
     this.camera.position.set(this.position.x, 2, this.position.z - 5);
     callback();
   };

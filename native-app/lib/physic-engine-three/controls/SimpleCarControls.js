@@ -1,6 +1,6 @@
 import { Vec3 } from "cannon";
 import { Vector3, Euler } from "three";
-export class CarControls {
+export class SimpleCarControls {
   #expectedTurn = 0;
   #keys = {};
   #brakeEngineTimeouts = {};
@@ -55,14 +55,14 @@ export class CarControls {
       //    }, oppositeTimerLength);
       //  }
       //}
-      clearTimeout(this.#brakeEngineTimeouts[code]);
+      //clearTimeout(this.#brakeEngineTimeouts[code]);
       this.#keys[code] = { pressed: true, type: "keydown" };
     } else {
       if (this.#keys[code]?.type === "keydown") {
         this.#keys[code].type = "released";
-        this.#brakeEngineTimeouts[code] = setTimeout(() => {
-          this.#keys[code] = { pressed: false, type: "keyup" };
-        }, timerLength);
+        //this.#brakeEngineTimeouts[code] = setTimeout(() => {
+        //  this.#keys[code] = { pressed: false, type: "keyup" };
+        //}, timerLength);
       }
     }
   };
@@ -87,9 +87,15 @@ export class CarControls {
     //  nextPositionZ !== latestPosition.z ||
     //  this.#obj.yAngle !== latestYAngle
     //) {
+
+
+
     this.#obj.translateZ(this.#obj.actualSpeed);
     this.#obj.physicBody.position.copy(this.#obj.position);
     this.#obj.physicBody.quaternion.copy(this.#obj.quaternion);
+
+
+
     //this.#obj.physicBody.position.set(
     //  nextPositionX,
     //  this.#obj.position.y,
@@ -106,10 +112,12 @@ export class CarControls {
     let toMod = false;
     if (this.#keys["ArrowLeft"]?.pressed) {
       this.#obj.rotateOnAxis(new Vector3(0, 1, 0), 0.02);
+      this.#keys["ArrowLeft"] = { pressed: false, type: "keyup" };
       toMod = true;
     }
     if (this.#keys["ArrowRight"]?.pressed) {
       this.#obj.rotateOnAxis(new Vector3(0, 1, 0), -0.02);
+      this.#keys["ArrowRight"] = { pressed: false, type: "keyup" };
       toMod = true;
     }
     if (this.#keys["ArrowUp"]?.pressed) {
@@ -126,7 +134,7 @@ export class CarControls {
             if (this.#obj.actualSpeed < 0) {
               this.#obj.actualSpeed += this.#obj.accCoeff * this.#obj.tireGrip; // wheelspin
             } else {
-              clearTimeout(this.#brakeEngineTimeouts["ArrowDown"]);
+              //clearTimeout(this.#brakeEngineTimeouts["ArrowDown"]);
               this.#keys["ArrowDown"] = { pressed: false, type: "keyup" };
               this.#obj.actualSpeed += this.#obj.accCoeff;
             } // acceleration
@@ -142,7 +150,7 @@ export class CarControls {
           if (this.#obj.actualSpeed - this.#obj.brakeEngine >= 0) {
             this.#obj.actualSpeed -= this.#obj.brakeEngine; // acc pedal is up and brake pedal is up
           } else {
-            clearTimeout(this.#brakeEngineTimeouts["ArrowUp"]);
+            //clearTimeout(this.#brakeEngineTimeouts["ArrowUp"]);
             this.#keys["ArrowUp"] = { pressed: false, type: "keyup" }; // vehicle stop with brake engine; acc pedal is definitely up
             this.#obj.actualSpeed = 0;
           }
@@ -150,7 +158,7 @@ export class CarControls {
           if (this.#obj.actualSpeed - this.#obj.brakeCoeff >= 0) {
             this.#obj.actualSpeed -= this.#obj.brakeCoeff; // braking with no acc pedal down
           } else {
-            clearTimeout(this.#brakeEngineTimeouts["ArrowUp"]);
+            //clearTimeout(this.#brakeEngineTimeouts["ArrowUp"]);
             this.#keys["ArrowUp"] = { pressed: false, type: "keyup" };
             this.#obj.actualSpeed = 0; // vehicle stops
           }
@@ -173,7 +181,7 @@ export class CarControls {
         if (this.#obj.actualSpeed + this.#obj.brakeEngine <= 0) {
           this.#obj.actualSpeed += this.#obj.brakeEngine; // reverse pedal is up and brake pedal is up
         } else {
-          clearTimeout(this.#brakeEngineTimeouts["ArrowDown"]);
+          //clearTimeout(this.#brakeEngineTimeouts["ArrowDown"]);
           this.#keys["ArrowDown"] = { pressed: false, type: "keyup" }; // vehicle stop with brake engine; acc pedal is definitely up
           this.#obj.actualSpeed = 0;
         }
