@@ -1,116 +1,115 @@
-import { PhysicObject } from ".";
+import { Body, Box, Vec3, RaycastVehicle, Sphere, Quaternion } from "cannon";
 import { SimpleCarControls } from "../controls/SimpleCarControls";
 import {
-  BoxGeometry,
-  MeshStandardMaterial,
   PerspectiveCamera,
-  ArrowHelper,
-  Euler,
   Vector3,
-  Raycaster,
+  BoxGeometry,
+  CylinderGeometry,
+  MeshStandardMaterial,
 } from "three";
-import { Vec3 } from "cannon";
+import { PhysicObject } from ".";
 
-//const rays = [
-//  new Vector3(0, 0, 1),
-//  new Vector3(1, 0, 1),
-//  new Vector3(1, 0, 0),
-//  new Vector3(1, 0, -1),
-//  new Vector3(0, 0, -1),
-//  new Vector3(-1, 0, -1),
-//  new Vector3(-1, 0, 0),
-//  new Vector3(-1, 0, 1),
-//];
-//
-//const caster = new Raycaster();
-
-export class SimpleCarObject extends PhysicObject {
-  constructor(
-    position,
-    quaternion,
-    mass,
-    color,
-    enableControls = false,
-    isCameraObject = false
-  ) {
-    super(
-      new BoxGeometry(0.7, 0.55, 0.9),
-      new MeshStandardMaterial({ color }),
-      position,
-      quaternion,
-      mass
+export class SimpleCarObject extends RaycastVehicle {
+  constructor(enableControls = false, isCameraObject = false) {
+    super({ chassisBody: new Body({ mass: 40 }) });
+    this.chassisBody.addShape(new Box(new Vec3(2, 1, 0.5)));
+    this.chassisBody.position.set(0, 0, 0);
+    this.chassisBody.angularVelocity.set(0, 0, 0);
+    this.chassisBody.quaternion.setFromAxisAngle(
+      new Vec3(1, 0, 0),
+      Math.PI / 2
     );
+    this.chassisShape = new PhysicObject(
+      new BoxGeometry(4, 2, 1),
+      new MeshStandardMaterial({ color: "#ffbb00" }),
+      this.chassisBody
+    );
+
+    var options = {
+      radius: 0.5,
+      directionLocal: new Vec3(0, 0, 1),
+      suspensionStiffness: 30,
+      suspensionRestLength: 0.3,
+      frictionSlip: 5,
+      dampingRelaxation: 2.3,
+      dampingCompression: 4.4,
+      maxSuspensionForce: 100000,
+      rollInfluence: 0.01,
+      axleLocal: new Vec3(0, 1, 0),
+      chassisConnectionPointLocal: new Vec3(1, 1, 0),
+      maxSuspensionTravel: 0.3,
+      customSlidingRotationalSpeed: -30,
+      useCustomSlidingRotationalSpeed: true,
+    };
+
+    options.chassisConnectionPointLocal.set(1, 1, 0);
+    this.addWheel(options);
+
+    options.chassisConnectionPointLocal.set(1, -1, 0);
+    this.addWheel(options);
+
+    options.chassisConnectionPointLocal.set(-1, 1, 0);
+    this.addWheel(options);
+
+    options.chassisConnectionPointLocal.set(-1, -1, 0);
+    this.addWheel(options);
+
+    this.wheelBodies = [];
+    this.wheelShapes = [];
+    this.wheelInfos.forEach((wheel) => {
+      const wheelBody = new Body({
+        mass: 0,
+        type: Body.KINEMATIC,
+        collisionFilterGroup: 0,
+        shape: new Sphere(wheel.radius),
+      });
+      wheelBody.quaternion.setFromAxisAngle(new Vec3(1, 0, 0), Math.PI / 2);
+      this.wheelBodies.push(wheelBody);
+      this.wheelShapes.push(
+        new PhysicObject(
+          new CylinderGeometry(wheel.radius, wheel.radius, wheel.radius, 30),
+          new MeshStandardMaterial({ color: "#000000" }),
+          wheelBody
+        )
+      );
+    });
 
     this.enableControls = enableControls;
     this.isCameraObject = isCameraObject;
+
     if (enableControls) {
-      this.topSpeed = 0.25;
-      this.topReverseSpeed = -0.1;
-      this.actualSpeed = 0;
-      this.accCoeff = 0.012;
-      this.brakeCoeff = 0.024;
-      this.brakeEngine = 0.008;
-      this.tireGrip = 0.75; // percentage
-      this.steeringCoeff = 0.05;
-      this.forwardArrow = new ArrowHelper(
-        new Vector3(0, 0, 1).normalize(),
-        new Vector3(this.position.x, this.position.y, this.position.z),
-        0,
-        "#ff0000"
-      );
-      this.upArrow = new ArrowHelper(
-        new Vector3(0, 1, 0).normalize(),
-        new Vector3(this.position.x, this.position.y, this.position.z),
-        2,
-        "#0000ff"
-      );
+      this.maxSteerVal = 0.5;
+      this.maxForce = 40;
+      this.brakeForce = 3;
       this.controls = new SimpleCarControls(this);
     }
     if (isCameraObject) {
       this.camera = new PerspectiveCamera(75, 1, 0.1, 1000);
-      this.camera.position.set(this.position.x, 2, this.position.z - 5);
-      this.camera.lookAt(this.position);
+      console.log(this.chassisBody.position);
+      this.camera.position.set(this.chassisShape.position.x, 2, this.chassisShape.position.z - 5);
+      this.camera.lookAt(this.chassisShape.position);
     }
   }
-
   enableBrowserStdControls = () => {
     if (this.enableControls) {
       this.controls.enableBrowserStdControls();
     }
   };
-
-  updatePosition = (/*objects, */ callback) => {
-    //var collisions, i;
-    //for (i = 0; i < rays.length; i += 1) {
-    //  caster.set(this.position, rays[i]);
-    //  collisions = caster.intersectObjects(objects);
-    //}
-    //console.log(collisions);
-    //this.physicBody.applyForce(new Vec3(1999,9,9))
-
-    this.forwardArrow.setDirection(
-      new Vector3(0, 0, 1)
-        .applyEuler(
-          new Euler(this.rotation.x, this.rotation.y, this.rotation.z, "XYZ")
-        )
-        .normalize()
-    );
-    this.forwardArrow.setLength((3 * this.actualSpeed) / this.topSpeed);
-    this.forwardArrow.position.copy(this.position);
-
-    this.upArrow.setDirection(
-      new Vector3(0, 1, 0)
-        .applyEuler(
-          new Euler(this.rotation.x, this.rotation.y, this.rotation.z, "XYZ")
-        )
-        .normalize()
-    );
-    this.upArrow.position.copy(this.position);
-
-    this.position.copy(this.physicBody.position);
-    this.quaternion.copy(this.physicBody.quaternion);
-
-    this.camera.position.set(this.position.x, 2, this.position.z - 5);
+  updatePosition = (callback = () => {}) => {
+    this.chassisShape.position.copy(this.chassisBody.position);
+    this.chassisShape.quaternion.copy(this.chassisBody.quaternion);
+    this.wheelInfos.forEach((wheel) => {
+      this.updateWheelTransform(this.wheelInfos.indexOf(wheel));
+      const wheelBody = this.wheelBodies[this.wheelInfos.indexOf(wheel)];
+      wheelBody.position.copy(wheel.worldTransform.position);
+      wheelBody.quaternion.copy(wheel.worldTransform.quaternion);
+    });
+    this.wheelShapes.forEach((wheelShape) => {
+      const index = this.wheelShapes.indexOf(wheelShape);
+      wheelShape.position.copy(this.wheelBodies[index].position);
+      wheelShape.quaternion.copy(this.wheelBodies[index].quaternion);
+    });
+    this.camera.position.set(this.chassisShape.position.x, 2, this.chassisShape.position.z - 5);
     callback();
   };
 }
