@@ -20,6 +20,7 @@ import {
   Fog,
   Color,
   Vector3,
+  Quaternion,
 } from "three";
 import { MMDLoader } from "three/examples/jsm/loaders/MMDLoader";
 //import { MMDAnimationHelper } from "three/examples/jsm/animation/MMDAnimationHelper";
@@ -46,7 +47,6 @@ import { SimpleCarObject } from "./lib/physic-engine-three/core";
 import { Renderer, TextureLoader } from "expo-three";
 import { GLView } from "expo-gl";
 import socketIoClient from "socket.io-client";
-import { Quaternion } from "three";
 
 const defaultColors = [
   "#ff6666",
@@ -57,14 +57,34 @@ const defaultColors = [
   "#ff6666",
 ];
 
-const player = new SimpleCarObject(true, true);
-player.enableBrowserStdControls();
+const debug = true;
 
 const scene = new Scene();
-scene.add(player.chassisShape);
-player.wheelShapes.forEach((wheelShape) => scene.add(wheelShape));
 const world = new World();
-const mass = 1.5;
+
+const player = new SimpleCarObject(
+  {
+    x: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
+    y: 2,
+    z: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
+  },
+  new Quaternion().setFromAxisAngle(new Vec3(1, 0, 0), Math.PI / 2),
+  defaultColors[Math.floor(Math.random() * defaultColors.length)],
+  true,
+  true
+);
+
+const player1 = new SimpleCarObject(
+  {
+    x: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
+    y: 2,
+    z: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
+  },
+  new Quaternion().setFromAxisAngle(new Vec3(1, 0, 0), Math.PI / 2),
+  defaultColors[Math.floor(Math.random() * defaultColors.length)],
+  false,
+  false
+);
 
 export default function App() {
   const [error, setError] = useState(undefined);
@@ -87,34 +107,44 @@ export default function App() {
     socket.on("initialization", (playersInRoom) => {
       setError(undefined);
       setSocketId(socket.id);
-      Object.keys(playersInRoom).forEach((socketId) => {
-        const _player = playersInRoom[socketId];
-        const alreadySpawnedPlayer = new SimpleCarObject(
-          _player.position,
-          _player.quaternion,
-          mass,
-          _player.color
-        );
-        alreadySpawnedPlayer.socketId = socketId;
-        alreadySpawnedPlayer.physicBody.socketId = socketId;
-        world.addBody(alreadySpawnedPlayer.physicBody);
-        scene.add(alreadySpawnedPlayer);
-      });
+      //Object.keys(playersInRoom).forEach((socketId) => {
+      //  const _player = playersInRoom[socketId];
+      //  const alreadySpawnedPlayer = new SimpleCarObject(
+      //    _player.position,
+      //    _player.quaternion,
+      //    _player.color
+      //  );
+      //  alreadySpawnedPlayer.chassisShape.socketId = player.socketId;
+      //  alreadySpawnedPlayer.chassisBody.socketId = player.socketId;
+      //  scene.add(alreadySpawnedPlayer.chassisShape);
+      //  alreadySpawnedPlayer.wheelShapes.forEach((wheelShape) =>
+      //    scene.add(wheelShape)
+      //  );
+//
+      //  alreadySpawnedPlayer.addToWorld(world);
+      //  alreadySpawnedPlayer.wheelBodies.forEach((wheel) =>
+      //    world.addBody(wheel)
+      //  );
+      //});
     });
-    //socket.on("new_player_spawned", (player) => {
-    //  if (Boolean(player)) {
-    //    const spawnedPlayer = new SimpleCarObject(
-    //      player.position,
-    //      player.quaternion,
-    //      mass,
-    //      player.color
-    //    );
-    //    spawnedPlayer.socketId = player.socketId;
-    //    spawnedPlayer.physicBody.socketId = player.socketId;
-    //    world.addBody(spawnedPlayer.physicBody);
-    //    scene.add(spawnedPlayer);
-    //  }
-    //});
+    socket.on("new_player_spawned", (player) => {
+      if (Boolean(player)) {
+        //const spawnedPlayer = new SimpleCarObject(
+        //  player.position,
+        //  player.quaternion,
+        //  player.color
+        //);
+        //spawnedPlayer.chassisShape.socketId = player.socketId;
+        //spawnedPlayer.chassisBody.socketId = player.socketId;
+        //scene.add(spawnedPlayer.chassisShape);
+        //spawnedPlayer.wheelShapes.forEach((wheelShape) =>
+        //  scene.add(wheelShape)
+        //);
+//
+        //spawnedPlayer.addToWorld(world);
+        //spawnedPlayer.wheelBodies.forEach((wheel) => world.addBody(wheel));
+      }
+    });
     //socket.on("player_despawned", (playerId) => {
     //  scene.children = scene.children.filter(
     //    (elem) => elem.socketId != playerId
@@ -154,12 +184,6 @@ export default function App() {
     });
   };
 
-  const moveLogic = () => {
-    if (Platform.OS === "web") {
-      player.controls.performMove();
-    }
-  };
-
   return (
     <View style={{ flex: 1 }}>
       {Boolean(error) && <Text style={{ color: "red" }}>{error}</Text>}
@@ -167,52 +191,23 @@ export default function App() {
         <GLView
           style={{ flex: 1 }}
           onContextCreate={(gl) => {
-            scene.add(new GridHelper(1000, 1000));
-
-            world.broadphase = new SAPBroadphase(world);
-            world.gravity.set(0, -9, 0);
-            world.defaultContactMaterial.friction = 0;
+            world.quatNormalizeSkip = 0;
+            world.quatNormalizeFast = false;
+            world.defaultContactMaterial.contactEquationStiffness = 1e128;
+            world.defaultContactMaterial.contactEquationRelaxation = 4;
+            world.gravity.set(0, -9.82, 0);
+            world.solver.iterations = 20;
+            world.solver.tolerance = 0.0;
 
             // Create a slippery material (friction coefficient = 0.0)
-            var slipperyMaterial = new Material("slipperyMaterial");
-
-            // The ContactMaterial defines what happens when two materials meet.
-            // In this case we want friction coefficient = 0.0 when the slippery material touches ground.
-            var slippery_ground_cm = new ContactMaterial(
-              slipperyMaterial,
-              slipperyMaterial,
-              {
-                friction: 0,
-                restitution: 0.3,
-                contactEquationStiffness: 1e128,
-                contactEquationRelaxation: 4,
-              }
+            var physicsMaterial = new Material("slipperyMaterial");
+            var physicsContactMaterial = new ContactMaterial(
+              physicsMaterial,
+              physicsMaterial,
+              0.0, // friction coefficient
+              0.3 // restitution
             );
-
-            // We must add the contact materials to the world
-            world.addContactMaterial(slippery_ground_cm);
-
-            //var groundMaterial = new Material("groundMaterial");
-            //var wheelMaterial = new Material("wheelMaterial");
-            //var wheelGroundContactMaterial =
-            //  (window.wheelGroundContactMaterial = new ContactMaterial(
-            //    wheelMaterial,
-            //    groundMaterial,
-            //    {
-            //      friction: 0.3,
-            //      restitution: 0,
-            //      contactEquationStiffness: 1000,
-            //    }
-            //  ));
-            //
-            //// We must add the contact materials to the world
-            //world.addContactMaterial(wheelGroundContactMaterial);
-
-            player.addToWorld(world);
-
-            player.wheelBodies.forEach((wheel) => world.addBody(wheel));
-
-            // Update wheels
+            world.addContactMaterial(physicsContactMaterial);
 
             // Create a plane
             var groundShape = new Plane();
@@ -231,7 +226,7 @@ export default function App() {
             //  var x = (Math.random() - 0.5) * 20;
             //  var y = 1 + (Math.random() - 0.5) * 1;
             //  var z = (Math.random() - 0.5) * 20;
-            //  var boxBody = new Body({ mass: 1 });
+            //  var boxBody = new Body({ mass: 0.1 });
             //  boxBody.addShape(boxShape);
             //  var boxMesh = new Mesh(
             //    new BoxGeometry(2, 2, 2),
@@ -246,29 +241,6 @@ export default function App() {
             //  boxes.push(boxBody);
             //  boxMeshes.push(boxMesh);
             //}
-
-            scene.fog = new Fog("#87ceeb", 1, 30);
-
-            //scene.background = new Color("#87ceeb");
-            //const groundTexture = new TextureLoader().load(
-            //  require("./resources/textures/ground.png")
-            //);
-            //groundTexture.wrapS = RepeatWrapping;
-            //groundTexture.wrapT = RepeatWrapping;
-            //groundTexture.repeat.set(10000, 10000);
-            //groundTexture.anisotropy = 16;
-            //groundTexture.encoding = sRGBEncoding;
-            //const groundMaterial = new MeshStandardMaterial({
-            //  map: groundTexture,
-            //});
-            //const groundMesh = new Mesh(
-            //  new PlaneBufferGeometry(10000, 10000),
-            //  groundMaterial
-            //);
-            //groundMesh.position.y = 0;
-            //groundMesh.rotation.x = -Math.PI / 2;
-            //groundMesh.receiveShadow = true;
-            //scene.add(groundMesh);
 
             var hemilight = new HemisphereLight(0xffeeb1, 0x080820, 1);
             scene.add(hemilight);
@@ -288,6 +260,7 @@ export default function App() {
             } catch {}
 
             const renderer = new Renderer({ gl });
+            let debugRenderer;
 
             renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
             renderer.shadowMap.enabled = true;
@@ -297,17 +270,49 @@ export default function App() {
               gl.drawingBufferWidth / gl.drawingBufferHeight;
             player.camera.updateProjectionMatrix();
 
-            //player.socketId = socketId;
-            //scene.add(player);
-            //
-            //playerInit(
-            //  player.position,
-            //  player.quaternion,
-            //  player.material.color
-            //);
-            //world.addBody(player.physicBody);
+            player.socketId = socketId;
+            scene.add(player.chassisShape);
+            player.wheelShapes.forEach((wheelShape) => scene.add(wheelShape));
 
-            const debugRenderer = new CannonDebugRenderer(scene, world); // debug element
+            player.addToWorld(world);
+            player.wheelBodies.forEach((wheel) => world.addBody(wheel));
+
+            player.enableBrowserStdControls();
+
+            playerInit(
+              player.chassisShape.position,
+              player.chassisShape.quaternion,
+              player.chassisShape.material.color
+            );
+
+            if (debug) {
+              scene.add(new GridHelper(1000, 1000));
+              scene.add(player.forwardArrow);
+              scene.add(player.velocityArrow);
+              debugRenderer = new CannonDebugRenderer(scene, world); // debug element
+            } else {
+              scene.fog = new Fog("#87ceeb", 1, 30);
+              scene.background = new Color("#87ceeb");
+              const groundTexture = new TextureLoader().load(
+                require("./resources/textures/ground.png")
+              );
+              groundTexture.wrapS = RepeatWrapping;
+              groundTexture.wrapT = RepeatWrapping;
+              groundTexture.repeat.set(10000, 10000);
+              groundTexture.anisotropy = 16;
+              groundTexture.encoding = sRGBEncoding;
+              const groundMaterial = new MeshStandardMaterial({
+                map: groundTexture,
+              });
+              const groundMesh = new Mesh(
+                new PlaneBufferGeometry(10000, 10000),
+                groundMaterial
+              );
+              groundMesh.position.y = 0;
+              groundMesh.rotation.x = -Math.PI / 2;
+              groundMesh.receiveShadow = true;
+              scene.add(groundMesh);
+            }
 
             const animate = () => {
               setTimeout(function () {
@@ -340,7 +345,7 @@ export default function App() {
               //  boxMeshes[i].position.copy(boxes[i].position);
               //  boxMeshes[i].quaternion.copy(boxes[i].quaternion);
               //}
-              debugRenderer.update();
+              Boolean(debugRenderer) && debugRenderer.update();
               renderer.render(scene, player.camera);
               gl.endFrameEXP();
             };

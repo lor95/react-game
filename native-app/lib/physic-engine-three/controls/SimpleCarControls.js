@@ -1,5 +1,9 @@
+import { Vector3, Euler } from "three";
+
 export class SimpleCarControls {
   #obj = null;
+  #brakeTrigger = 1;
+
   constructor(SimpleCarObject) {
     this.#obj = SimpleCarObject;
   }
@@ -11,6 +15,25 @@ export class SimpleCarControls {
       return;
     }
 
+    this.#brakeTrigger = new Vector3(
+      this.#obj.chassisBody.velocity.x,
+      this.#obj.chassisBody.velocity.y,
+      this.#obj.chassisBody.velocity.z
+    )
+      .normalize()
+      .angleTo(
+        new Vector3(1, 0, 0)
+          .applyEuler(
+            new Euler(
+              this.#obj.chassisShape.rotation.x,
+              this.#obj.chassisShape.rotation.y,
+              this.#obj.chassisShape.rotation.z,
+              "XYZ"
+            )
+          )
+          .normalize()
+      );
+
     this.#obj.setBrake(0, 0);
     this.#obj.setBrake(0, 1);
     this.#obj.setBrake(0, 2);
@@ -18,20 +41,27 @@ export class SimpleCarControls {
     
     switch (code) {
       case "ArrowUp":
+        //  if (this.#brakeTrigger === 1) {
         this.#obj.applyEngineForce(up ? 0 : this.#obj.maxForce, 2);
         this.#obj.applyEngineForce(up ? 0 : this.#obj.maxForce, 3);
+        //  } else {
+        //    this.#obj.setBrake(this.#obj.brakeForce, 0);
+        //    this.#obj.setBrake(this.#obj.brakeForce, 1);
+        //    this.#obj.setBrake(this.#obj.brakeForce, 2);
+        //    this.#obj.setBrake(this.#obj.brakeForce, 3);
+        //  }
         break;
 
       case "ArrowDown":
-        this.#obj.applyEngineForce(up ? 0 : -this.#obj.maxForce, 2);
-        this.#obj.applyEngineForce(up ? 0 : -this.#obj.maxForce, 3);
-        break;
-
-      case "KeyB":
-        this.#obj.setBrake(this.#obj.brakeForce, 0);
-        this.#obj.setBrake(this.#obj.brakeForce, 1);
-        this.#obj.setBrake(this.#obj.brakeForce, 2);
-        this.#obj.setBrake(this.#obj.brakeForce, 3);
+        if (this.#brakeTrigger > Math.PI / 2) {
+          this.#obj.applyEngineForce(up ? 0 : -this.#obj.maxForce / 2, 2);
+          this.#obj.applyEngineForce(up ? 0 : -this.#obj.maxForce / 2, 3);
+        } else {
+          this.#obj.setBrake(this.#obj.brakeForce, 0);
+          this.#obj.setBrake(this.#obj.brakeForce, 1);
+          this.#obj.setBrake(this.#obj.brakeForce, 2);
+          this.#obj.setBrake(this.#obj.brakeForce, 3);
+        }
         break;
 
       case "ArrowRight":
