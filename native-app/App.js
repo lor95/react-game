@@ -74,18 +74,6 @@ const player = new SimpleCarObject(
   true
 );
 
-const player1 = new SimpleCarObject(
-  {
-    x: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
-    y: 2,
-    z: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
-  },
-  new Quaternion().setFromAxisAngle(new Vec3(1, 0, 0), Math.PI / 2),
-  defaultColors[Math.floor(Math.random() * defaultColors.length)],
-  false,
-  false
-);
-
 export default function App() {
   const [error, setError] = useState(undefined);
   const [socketId, setSocketId] = useState(undefined);
