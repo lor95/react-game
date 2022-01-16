@@ -18,7 +18,6 @@ export class SimpleCarObject extends RaycastVehicle {
       new Vec3(1, 0, 0),
       Math.PI / 2
     ),
-    mass,
     chassisColor = "#ffffff",
     enableControls = false,
     isCameraObject = false,
@@ -27,6 +26,7 @@ export class SimpleCarObject extends RaycastVehicle {
       height: 0.6,
       depth: 0.3,
     },
+    mass = 20,
     dynamicOptions = {
       directionLocal: new Vec3(0, 0, 1),
       suspensionStiffness: 30,

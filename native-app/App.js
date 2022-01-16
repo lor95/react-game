@@ -15,6 +15,7 @@ import {
   Fog,
   Color,
   Quaternion,
+  BoxGeometry,
 } from "three";
 import { MMDLoader } from "three/examples/jsm/loaders/MMDLoader";
 import {
@@ -43,8 +44,8 @@ const defaultColors = [
   "#ff6666",
 ];
 
-const debug = true;
-const mass = 25;
+const debug = false;
+const randomBoxes = true;
 
 const scene = new Scene();
 const world = new World();
@@ -57,7 +58,6 @@ const player = new SimpleCarObject(
     z: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
   },
   new Quaternion().setFromAxisAngle(new Vec3(1, 0, 0), Math.PI / 2),
-  mass,
   defaultColors[Math.floor(Math.random() * defaultColors.length)],
   true,
   true
@@ -90,7 +90,6 @@ export default function App() {
         const alreadySpawnedPlayer = new SimpleCarObject(
           _player.position,
           _player.quaternion,
-          mass,
           _player.color
         );
         alreadySpawnedPlayer.setCommonId(socketId);
@@ -113,7 +112,6 @@ export default function App() {
         const spawnedPlayer = new SimpleCarObject(
           player.position,
           player.quaternion,
-          mass,
           player.color
         );
         spawnedPlayer.setCommonId(player.socketId);
@@ -160,6 +158,7 @@ export default function App() {
         });
       }
     });
+
     socket.connect();
   }
 
@@ -197,8 +196,8 @@ export default function App() {
             world.addContactMaterial(physicsContactMaterial);
 
             // Create a plane
-            var groundShape = new Plane();
-            var groundBody = new Body({ mass: 0 });
+            const groundShape = new Plane();
+            const groundBody = new Body({ mass: 0 });
             groundBody.addShape(groundShape);
             groundBody.quaternion.setFromAxisAngle(
               new Vec3(1, 0, 0),
@@ -206,28 +205,30 @@ export default function App() {
             );
             world.addBody(groundBody);
 
-            //var boxes = [];
-            //var boxMeshes = [];
-            //var boxShape = new Box(new Vec3(1, 1, 1));
-            //for (var i = 0; i < 7; i++) {
-            //  var x = (Math.random() - 0.5) * 20;
-            //  var y = 1 + (Math.random() - 0.5) * 1;
-            //  var z = (Math.random() - 0.5) * 20;
-            //  var boxBody = new Body({ mass: 0.1 });
-            //  boxBody.addShape(boxShape);
-            //  var boxMesh = new Mesh(
-            //    new BoxGeometry(2, 2, 2),
-            //    new MeshStandardMaterial({ color: "blue" })
-            //  );
-            //  world.addBody(boxBody);
-            //  scene.add(boxMesh);
-            //  boxBody.position.set(x, y, z);
-            //  boxMesh.position.set(x, y, z);
-            //  boxMesh.castShadow = true;
-            //  boxMesh.receiveShadow = true;
-            //  boxes.push(boxBody);
-            //  boxMeshes.push(boxMesh);
-            //}
+            let boxes = [];
+            let boxMeshes = [];
+            if (randomBoxes) {
+              var boxShape = new Box(new Vec3(1, 1, 1));
+              for (var i = 0; i < 7; i++) {
+                var x = (Math.random() - 0.5) * 30;
+                var y = 1 + (Math.random() - 0.5) * 1;
+                var z = (Math.random() - 0.5) * 30;
+                var boxBody = new Body({ mass: 0.1 });
+                boxBody.addShape(boxShape);
+                var boxMesh = new Mesh(
+                  new BoxGeometry(2, 2, 2),
+                  new MeshStandardMaterial({ color: "blue" })
+                );
+                world.addBody(boxBody);
+                scene.add(boxMesh);
+                boxBody.position.set(x, y, z);
+                boxMesh.position.set(x, y, z);
+                boxMesh.castShadow = true;
+                boxMesh.receiveShadow = true;
+                boxes.push(boxBody);
+                boxMeshes.push(boxMesh);
+              }
+            }
 
             var hemilight = new HemisphereLight(0xffeeb1, 0x080820, 1);
             scene.add(hemilight);
@@ -324,19 +325,16 @@ export default function App() {
                   },
                 });
               });
-              //moveLogic();
-              //player.updatePosition(
-              //  /*scene.children.filter(
-              //    (elem) => Boolean(elem.socketId) && elem.socketId != socketId
-              //  ),*/
-              //
-              //  }
-              //);
-              //for (var i = 0; i < boxes.length; i++) {
-              //  boxMeshes[i].position.copy(boxes[i].position);
-              //  boxMeshes[i].quaternion.copy(boxes[i].quaternion);
-              //}
+
+              if (randomBoxes) {
+                for (var i = 0; i < boxes.length; i++) {
+                  boxMeshes[i].position.copy(boxes[i].position);
+                  boxMeshes[i].quaternion.copy(boxes[i].quaternion);
+                }
+              }
+
               Boolean(debugRenderer) && debugRenderer.update();
+
               renderer.render(scene, player.camera);
               gl.endFrameEXP();
             };
