@@ -18,12 +18,35 @@ export class SimpleCarObject extends RaycastVehicle {
       new Vec3(1, 0, 0),
       Math.PI / 2
     ),
+    mass,
     chassisColor = "#ffffff",
     enableControls = false,
-    isCameraObject = false
+    isCameraObject = false,
+    dimensions = {
+      width: 1,
+      height: 0.6,
+      depth: 0.3,
+    },
+    dynamicOptions = {
+      directionLocal: new Vec3(0, 0, 1),
+      suspensionStiffness: 30,
+      suspensionRestLength: 0.6,
+      frictionSlip: 3,
+      dampingRelaxation: 2.3,
+      dampingCompression: 4.4,
+      maxSuspensionForce: 200,
+      rollInfluence: 0.01,
+      axleLocal: new Vec3(0, 1, 0),
+      chassisConnectionPointLocal: new Vec3(1, 1, 0),
+      maxSuspensionTravel: 0.4,
+      customSlidingRotationalSpeed: -30,
+      useCustomSlidingRotationalSpeed: true,
+    }
   ) {
-    super({ chassisBody: new Body({ mass: 25 }) });
-    this.chassisBody.addShape(new Box(new Vec3(2, 1, 0.5)));
+    super({ chassisBody: new Body({ mass }) });
+    this.chassisBody.addShape(
+      new Box(new Vec3(dimensions.width, dimensions.height, dimensions.depth))
+    );
     this.chassisBody.position.set(
       initialPosition.x,
       initialPosition.y,
@@ -36,38 +59,43 @@ export class SimpleCarObject extends RaycastVehicle {
       initialQuaternion._w
     );
     this.chassisShape = new PhysicObject(
-      new BoxGeometry(4, 2, 1),
+      new BoxGeometry(
+        dimensions.width * 2,
+        dimensions.height * 2,
+        dimensions.depth * 2
+      ),
       new MeshStandardMaterial({ color: chassisColor }),
       this.chassisBody
     );
 
-    var options = {
-      radius: 0.5,
-      directionLocal: new Vec3(0, 0, 1),
-      suspensionStiffness: 30,
-      suspensionRestLength: 0.3,
-      frictionSlip: 3,
-      dampingRelaxation: 2.3,
-      dampingCompression: 4.4,
-      maxSuspensionForce: 200,
-      rollInfluence: 0.01,
-      axleLocal: new Vec3(0, 1, 0),
-      chassisConnectionPointLocal: new Vec3(1, 1, 0),
-      maxSuspensionTravel: 0.4,
-      customSlidingRotationalSpeed: -30,
-      useCustomSlidingRotationalSpeed: true,
-    };
+    const options = { ...dynamicOptions, radius: dimensions.height * 0.5 };
 
-    options.chassisConnectionPointLocal.set(1, 1, 0);
+    options.chassisConnectionPointLocal.set(
+      dimensions.width * 0.6,
+      dimensions.height * 0.85,
+      0
+    );
     this.addWheel(options);
 
-    options.chassisConnectionPointLocal.set(1, -1, 0);
+    options.chassisConnectionPointLocal.set(
+      dimensions.width * 0.6,
+      -dimensions.height * 0.85,
+      0
+    );
     this.addWheel(options);
 
-    options.chassisConnectionPointLocal.set(-1, 1, 0);
+    options.chassisConnectionPointLocal.set(
+      -dimensions.width * 0.6,
+      dimensions.height * 0.85,
+      0
+    );
     this.addWheel(options);
 
-    options.chassisConnectionPointLocal.set(-1, -1, 0);
+    options.chassisConnectionPointLocal.set(
+      -dimensions.width * 0.6,
+      -dimensions.height * 0.85,
+      0
+    );
     this.addWheel(options);
 
     this.wheelBodies = [];
@@ -93,10 +121,10 @@ export class SimpleCarObject extends RaycastVehicle {
     this.enableControls = enableControls;
     this.isCameraObject = isCameraObject;
 
-    if (enableControls) {
+    if (this.enableControls) {
       this.maxSteerVal = 0.5;
       this.maxForce = 40;
-      this.brakeForce = 3;
+      this.brakeForce = 1;
       this.forwardArrow = new ArrowHelper(
         new Vector3(1, 0, 0).normalize(),
         new Vector3(
@@ -119,7 +147,7 @@ export class SimpleCarObject extends RaycastVehicle {
       );
       this.controls = new SimpleCarControls(this);
     }
-    if (isCameraObject) {
+    if (this.isCameraObject) {
       this.camera = new PerspectiveCamera(75, 1, 0.1, 1000);
       console.log(this.chassisBody.position);
       this.camera.position.set(
@@ -130,14 +158,21 @@ export class SimpleCarObject extends RaycastVehicle {
       this.camera.lookAt(this.chassisShape.position);
     }
   }
+
   enableBrowserStdControls = () => {
     if (this.enableControls) {
       this.controls.enableBrowserStdControls();
     }
   };
-  customAction = (callback = () => {}) => {
-    callback();
-  };
+
+  setCommonId(commonId) {
+    this.commonId = commonId;
+    this.chassisShape.commonId = commonId;
+    this.chassisBody.commonId = commonId;
+    this.wheelShapes.forEach((wheel) => (wheel.commonId = commonId));
+    this.wheelBodies.forEach((wheel) => (wheel.commonId = commonId));
+  }
+
   updatePosition = (callback = () => {}) => {
     this.chassisShape.position.copy(this.chassisBody.position);
     this.chassisShape.quaternion.copy(this.chassisBody.quaternion);
@@ -153,33 +188,38 @@ export class SimpleCarObject extends RaycastVehicle {
       wheelShape.quaternion.copy(this.wheelBodies[index].quaternion);
     });
 
-    this.forwardArrow.setDirection(
-      new Vector3(1, 0, 0)
-        .applyEuler(
-          new Euler(
-            this.chassisShape.rotation.x,
-            this.chassisShape.rotation.y,
-            this.chassisShape.rotation.z,
-            "XYZ"
-          )
-        )
-        .normalize()
-    );
-    this.velocityArrow.setDirection(
-      new Vector3(
-        this.chassisBody.velocity.x,
-        this.chassisBody.velocity.y,
-        this.chassisBody.velocity.z
-      )
-    );
-    this.forwardArrow.position.copy(this.chassisShape.position);
-    this.velocityArrow.position.copy(this.chassisShape.position);
+    if (this.isCameraObject) {
+      this.camera.position.set(
+        this.chassisShape.position.x - 8,
+        4,
+        this.chassisShape.position.z
+      );
+    }
 
-    this.camera.position.set(
-      this.chassisShape.position.x - 8,
-      4,
-      this.chassisShape.position.z
-    );
+    if (this.enableControls) {
+      this.forwardArrow.setDirection(
+        new Vector3(1, 0, 0)
+          .applyEuler(
+            new Euler(
+              this.chassisShape.rotation.x,
+              this.chassisShape.rotation.y,
+              this.chassisShape.rotation.z,
+              "XYZ"
+            )
+          )
+          .normalize()
+      );
+      this.velocityArrow.setDirection(
+        new Vector3(
+          this.chassisBody.velocity.x,
+          this.chassisBody.velocity.y,
+          this.chassisBody.velocity.z
+        )
+      );
+      this.forwardArrow.position.copy(this.chassisShape.position);
+      this.velocityArrow.position.copy(this.chassisShape.position);
+    }
+
     callback();
   };
 }

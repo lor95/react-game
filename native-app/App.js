@@ -5,34 +5,20 @@ import {
   Scene,
   Mesh,
   MeshStandardMaterial,
-  PerspectiveCamera,
-  BoxBufferGeometry,
   GridHelper,
-  DirectionalLight,
   HemisphereLight,
-  MeshLambertMaterial,
   SpotLight,
   RepeatWrapping,
   sRGBEncoding,
   PlaneBufferGeometry,
-  BoxGeometry,
   PCFShadowMap,
   Fog,
   Color,
-  Vector3,
   Quaternion,
 } from "three";
 import { MMDLoader } from "three/examples/jsm/loaders/MMDLoader";
-//import { MMDAnimationHelper } from "three/examples/jsm/animation/MMDAnimationHelper";
-//import Ammo from "./lib/kripken/ammo";
 import {
   World,
-  Cylinder,
-  RaycastVehicle,
-  SAPBroadphase,
-  Heightfield,
-  GSSolver,
-  SplitSolver,
   Body,
   Box,
   Sphere,
@@ -58,9 +44,11 @@ const defaultColors = [
 ];
 
 const debug = true;
+const mass = 25;
 
 const scene = new Scene();
 const world = new World();
+let players = [];
 
 const player = new SimpleCarObject(
   {
@@ -69,6 +57,7 @@ const player = new SimpleCarObject(
     z: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
   },
   new Quaternion().setFromAxisAngle(new Vec3(1, 0, 0), Math.PI / 2),
+  mass,
   defaultColors[Math.floor(Math.random() * defaultColors.length)],
   true,
   true
@@ -92,75 +81,85 @@ export default function App() {
     socket.on("connect_error", () => {
       setError("Unable to connect to socket");
     });
+
     socket.on("initialization", (playersInRoom) => {
       setError(undefined);
       setSocketId(socket.id);
-      //Object.keys(playersInRoom).forEach((socketId) => {
-      //  const _player = playersInRoom[socketId];
-      //  const alreadySpawnedPlayer = new SimpleCarObject(
-      //    _player.position,
-      //    _player.quaternion,
-      //    _player.color
-      //  );
-      //  alreadySpawnedPlayer.chassisShape.socketId = player.socketId;
-      //  alreadySpawnedPlayer.chassisBody.socketId = player.socketId;
-      //  scene.add(alreadySpawnedPlayer.chassisShape);
-      //  alreadySpawnedPlayer.wheelShapes.forEach((wheelShape) =>
-      //    scene.add(wheelShape)
-      //  );
-//
-      //  alreadySpawnedPlayer.addToWorld(world);
-      //  alreadySpawnedPlayer.wheelBodies.forEach((wheel) =>
-      //    world.addBody(wheel)
-      //  );
-      //});
+      Object.keys(playersInRoom).forEach((socketId) => {
+        const _player = playersInRoom[socketId];
+        const alreadySpawnedPlayer = new SimpleCarObject(
+          _player.position,
+          _player.quaternion,
+          mass,
+          _player.color
+        );
+        alreadySpawnedPlayer.setCommonId(socketId);
+        scene.add(alreadySpawnedPlayer.chassisShape);
+        alreadySpawnedPlayer.wheelShapes.forEach((wheelShape) => {
+          scene.add(wheelShape);
+        });
+
+        alreadySpawnedPlayer.addToWorld(world);
+        alreadySpawnedPlayer.wheelBodies.forEach((wheel) => {
+          world.addBody(wheel);
+        });
+        alreadySpawnedPlayer.updatePosition();
+        players.push(alreadySpawnedPlayer);
+      });
     });
+
     socket.on("new_player_spawned", (player) => {
       if (Boolean(player)) {
-        //const spawnedPlayer = new SimpleCarObject(
-        //  player.position,
-        //  player.quaternion,
-        //  player.color
-        //);
-        //spawnedPlayer.chassisShape.socketId = player.socketId;
-        //spawnedPlayer.chassisBody.socketId = player.socketId;
-        //scene.add(spawnedPlayer.chassisShape);
-        //spawnedPlayer.wheelShapes.forEach((wheelShape) =>
-        //  scene.add(wheelShape)
-        //);
-//
-        //spawnedPlayer.addToWorld(world);
-        //spawnedPlayer.wheelBodies.forEach((wheel) => world.addBody(wheel));
+        const spawnedPlayer = new SimpleCarObject(
+          player.position,
+          player.quaternion,
+          mass,
+          player.color
+        );
+        spawnedPlayer.setCommonId(player.socketId);
+        scene.add(spawnedPlayer.chassisShape);
+        spawnedPlayer.wheelShapes.forEach((wheelShape) => {
+          scene.add(wheelShape);
+        });
+
+        spawnedPlayer.addToWorld(world);
+        spawnedPlayer.wheelBodies.forEach((wheel) => {
+          world.addBody(wheel);
+        });
+        spawnedPlayer.updatePosition();
+        players.push(spawnedPlayer);
       }
     });
-    //socket.on("player_despawned", (playerId) => {
-    //  scene.children = scene.children.filter(
-    //    (elem) => elem.socketId != playerId
-    //  );
-    //  world.bodies = world.bodies.filter((elem) => elem.socketId != playerId);
-    //});
-    //socket.on("player_moved", (player) => {
-    //  if (Boolean(player)) {
-    //    scene.children = scene.children.map((child) => {
-    //      if (player.socketId === child.socketId) {
-    //        child.physicBody.position.set(
-    //          player.position.x,
-    //          player.position.y,
-    //          player.position.z
-    //        );
-    //        child.position.copy(child.physicBody.position);
-    //        child.physicBody.quaternion.set(
-    //          player.quaternion._x,
-    //          player.quaternion._y,
-    //          player.quaternion._z,
-    //          player.quaternion._w
-    //        );
-    //        child.quaternion.copy(child.physicBody.quaternion);
-    //      }
-    //      return child;
-    //    });
-    //  }
-    //});
+
+    socket.on("player_despawned", (playerId) => {
+      scene.children = scene.children.filter(
+        (elem) => !elem.commonId || elem.commonId != playerId
+      );
+      world.bodies = world.bodies.filter((elem) => elem.commonId != playerId);
+      players.filter((player) => player.commonId != playerId);
+    });
+
+    socket.on("player_moved", (player) => {
+      if (Boolean(player)) {
+        debugger;
+        players.forEach((_player) => {
+          if (player.socketId === _player.commonId) {
+            _player.chassisBody.position.set(
+              player.position.x,
+              player.position.y,
+              player.position.z
+            );
+            _player.chassisBody.quaternion.set(
+              player.quaternion._x,
+              player.quaternion._y,
+              player.quaternion._z,
+              player.quaternion._w
+            );
+          }
+          _player.updatePosition();
+        });
+      }
+    });
     socket.connect();
   }
 
@@ -258,12 +257,15 @@ export default function App() {
               gl.drawingBufferWidth / gl.drawingBufferHeight;
             player.camera.updateProjectionMatrix();
 
-            player.socketId = socketId;
             scene.add(player.chassisShape);
-            player.wheelShapes.forEach((wheelShape) => scene.add(wheelShape));
-
+            player.wheelShapes.forEach((wheelShape) => {
+              scene.add(wheelShape);
+            });
             player.addToWorld(world);
-            player.wheelBodies.forEach((wheel) => world.addBody(wheel));
+            player.wheelBodies.forEach((wheel) => {
+              world.addBody(wheel);
+            });
+            player.setCommonId(socketId);
 
             player.enableBrowserStdControls();
 
@@ -307,26 +309,27 @@ export default function App() {
                 requestAnimationFrame(animate);
                 world.step(1 / 30);
               }, 1000 / 30);
-              player.updatePosition();
+              player.updatePosition(() => {
+                socket.emit("player_move", {
+                  position: {
+                    x: player.chassisShape.position.x,
+                    y: player.chassisShape.position.y,
+                    z: player.chassisShape.position.z,
+                  },
+                  quaternion: {
+                    _x: player.chassisShape.quaternion._x,
+                    _y: player.chassisShape.quaternion._y,
+                    _z: player.chassisShape.quaternion._z,
+                    _w: player.chassisShape.quaternion._w,
+                  },
+                });
+              });
               //moveLogic();
               //player.updatePosition(
               //  /*scene.children.filter(
               //    (elem) => Boolean(elem.socketId) && elem.socketId != socketId
               //  ),*/
-              //  () => {
-              //    socket.emit("player_move", {
-              //      position: {
-              //        x: player.position.x,
-              //        y: player.position.y,
-              //        z: player.position.z,
-              //      },
-              //      quaternion: {
-              //        _x: player.quaternion._x,
-              //        _y: player.quaternion._y,
-              //        _z: player.quaternion._z,
-              //        _w: player.quaternion._w,
-              //      },
-              //    });
+              //
               //  }
               //);
               //for (var i = 0; i < boxes.length; i++) {
