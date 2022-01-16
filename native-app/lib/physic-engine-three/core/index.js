@@ -1,2 +1,2 @@
 export { PhysicObject } from "./PhysicObject";
-export { SimpleCarObject } from "./SimpleCarObject";
+export { SimpleCarObject } from "./vehicles/SimpleCarObject";

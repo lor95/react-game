@@ -17,15 +17,12 @@ import {
   Quaternion,
   BoxGeometry,
 } from "three";
-import { MMDLoader } from "three/examples/jsm/loaders/MMDLoader";
 import {
   World,
   Body,
   Box,
-  Sphere,
   Vec3,
   Plane,
-  NaiveBroadphase,
   Material,
   ContactMaterial,
 } from "cannon";
@@ -139,7 +136,6 @@ export default function App() {
 
     socket.on("player_moved", (player) => {
       if (Boolean(player)) {
-        debugger;
         players.forEach((_player) => {
           if (player.socketId === _player.commonId) {
             _player.chassisBody.position.set(

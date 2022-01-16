@@ -1,5 +1,5 @@
 import { Body, Box, Vec3, RaycastVehicle, Sphere, Quaternion } from "cannon";
-import { SimpleCarControls } from "../controls/SimpleCarControls";
+import { SimpleCarControls } from "../../controls/SimpleCarControls";
 import {
   PerspectiveCamera,
   Vector3,
@@ -9,7 +9,7 @@ import {
   ArrowHelper,
   Euler,
 } from "three";
-import { PhysicObject } from ".";
+import { PhysicObject } from "..";
 
 export class SimpleCarObject extends RaycastVehicle {
   constructor(
@@ -22,11 +22,11 @@ export class SimpleCarObject extends RaycastVehicle {
     enableControls = false,
     isCameraObject = false,
     dimensions = {
-      width: 1,
+      width: 1.3,
       height: 0.6,
-      depth: 0.3,
+      depth: 0.4,
     },
-    mass = 20,
+    mass = 16,
     dynamicOptions = {
       directionLocal: new Vec3(0, 0, 1),
       suspensionStiffness: 30,
@@ -118,33 +118,44 @@ export class SimpleCarObject extends RaycastVehicle {
       );
     });
 
+    this.score = 0;
+
     this.enableControls = enableControls;
     this.isCameraObject = isCameraObject;
+    this.maxSteerVal = 0.5;
+    this.maxForce = 50;
+    this.brakeForce = 1;
+    this.topSpeed = 13;
+    this.topReverseSpeed = 6
+
+    this.forwardArrow = new ArrowHelper(
+      new Vector3(1, 0, 0).normalize(),
+      new Vector3(
+        this.chassisShape.position.x,
+        this.chassisShape.position.y,
+        this.chassisShape.position.z
+      ),
+      2,
+      "#ff0000"
+    );
+    this.velocityArrow = new ArrowHelper(
+      new Vector3(1, 0, 0).normalize(),
+      new Vector3(
+        this.chassisBody.velocity.x,
+        this.chassisBody.velocity.y,
+        this.chassisBody.velocity.z
+      ),
+      2,
+      "#0000ff"
+    );
+
+    this.linearSpeed = Math.sqrt(
+      Math.pow(this.chassisBody.velocity.x, 2) +
+        Math.pow(this.chassisBody.velocity.y, 2) +
+        Math.pow(this.chassisBody.velocity.z, 2)
+    );
 
     if (this.enableControls) {
-      this.maxSteerVal = 0.5;
-      this.maxForce = 40;
-      this.brakeForce = 1;
-      this.forwardArrow = new ArrowHelper(
-        new Vector3(1, 0, 0).normalize(),
-        new Vector3(
-          this.chassisShape.position.x,
-          this.chassisShape.position.y,
-          this.chassisShape.position.z
-        ),
-        5,
-        "#ff0000"
-      );
-      this.velocityArrow = new ArrowHelper(
-        new Vector3(1, 0, 0).normalize(),
-        new Vector3(
-          this.chassisBody.velocity.x,
-          this.chassisBody.velocity.y,
-          this.chassisBody.velocity.z
-        ),
-        5,
-        "#0000ff"
-      );
       this.controls = new SimpleCarControls(this);
     }
     if (this.isCameraObject) {
@@ -174,6 +185,12 @@ export class SimpleCarObject extends RaycastVehicle {
   }
 
   updatePosition = (callback = () => {}) => {
+    this.linearSpeed = Math.sqrt(
+      Math.pow(this.chassisBody.velocity.x, 2) +
+        Math.pow(this.chassisBody.velocity.y, 2) +
+        Math.pow(this.chassisBody.velocity.z, 2)
+    );
+
     this.chassisShape.position.copy(this.chassisBody.position);
     this.chassisShape.quaternion.copy(this.chassisBody.quaternion);
     this.wheelInfos.forEach((wheel) => {
@@ -218,6 +235,9 @@ export class SimpleCarObject extends RaycastVehicle {
       );
       this.forwardArrow.position.copy(this.chassisShape.position);
       this.velocityArrow.position.copy(this.chassisShape.position);
+      this.velocityArrow.setLength(this.linearSpeed / 3);
+
+      this.controls.updateControls();
     }
 
     callback();
