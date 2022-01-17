@@ -37,6 +37,13 @@ export default function App() {
   const [error, setError] = useState(undefined);
   const [socketId, setSocketId] = useState(undefined);
   const [socket, setSocket] = useState(undefined);
+  const [viewWidth, setViewWidth] = useState(0);
+  const [viewHeight, setViewHeight] = useState(0);
+
+  const setDimensions = (layout) => {
+    setViewWidth(layout.width);
+    setViewHeight(layout.height);
+  };
 
   useEffect(() => {
     const socket_ = socketIoClient(SOCKET_ENDPOINT, {
@@ -146,7 +153,10 @@ export default function App() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View
+      style={{ flex: 1 }}
+      onLayout={(event) => setDimensions(event.nativeEvent.layout)}
+    >
       {Boolean(error) && <Text style={{ color: "red" }}>{error}</Text>}
       {Boolean(socket) && Boolean(socketId) && socket.connected && (
         <SimpleGameWindow
