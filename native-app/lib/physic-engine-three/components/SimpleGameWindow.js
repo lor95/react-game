@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Animated, StyleSheet, PanResponder } from "react-native";
+import {
+  View,
+  Animated,
+  StyleSheet,
+  PanResponder,
+  Platform,
+} from "react-native";
 import { Material, ContactMaterial, Plane, Body, Box, Vec3 } from "cannon";
 import { default as CannonDebugRenderer } from "../debug/CannonDebugRenderer";
 import {
@@ -20,7 +26,7 @@ import { Renderer, TextureLoader } from "expo-three";
 import { GLView } from "expo-gl";
 
 const styles = StyleSheet.create({
-  pointer: { position: "absolute", backgroundColor: "#000", borderRadius: 200 },
+  pointer: { position: "absolute", backgroundColor: "red", borderRadius: 200 },
   pointerContainer: {
     position: "absolute",
     backgroundColor: "#000",
@@ -63,6 +69,15 @@ const SimpleGameWindow = (props) => {
             ? gesture.dy
             : pointerPanel.y._value,
       });
+      props.mainPlayer.controls.mobileControls(
+        {
+          x: pointerPanel.x._value,
+          y: pointerPanel.y._value,
+          width: touchWidthArea,
+          height: touchHeightArea,
+        },
+        true
+      );
     },
     onPanResponderRelease: () => {
       pointerPanel.flattenOffset();
@@ -70,6 +85,15 @@ const SimpleGameWindow = (props) => {
         x: touchWidthArea / 3,
         y: touchHeightArea / 3,
       });
+      props.mainPlayer.controls.mobileControls(
+        {
+          x: pointerPanel.x._value,
+          y: pointerPanel.y._value,
+          width: touchWidthArea,
+          height: touchHeightArea,
+        },
+        false
+      );
     },
   });
 
@@ -227,29 +251,31 @@ const SimpleGameWindow = (props) => {
           animate();
         }}
       />
-      <View
-        style={[
-          styles.pointerContainer,
-          {
-            right: rightMargin,
-            bottom: bottomMargin,
-            height: touchHeightArea,
-            width: touchWidthArea,
-          },
-        ]}
-      >
-        <Animated.View
-          {...pointerPanelResponder.panHandlers}
+      {Platform.OS !== "web" && (
+        <View
           style={[
-            pointerPanel.getLayout(),
-            styles.pointer,
+            styles.pointerContainer,
             {
-              height: touchHeightArea / 3,
-              width: touchWidthArea / 3,
+              right: rightMargin,
+              bottom: bottomMargin,
+              height: touchHeightArea,
+              width: touchWidthArea,
             },
           ]}
-        />
-      </View>
+        >
+          <Animated.View
+            {...pointerPanelResponder.panHandlers}
+            style={[
+              pointerPanel.getLayout(),
+              styles.pointer,
+              {
+                height: touchHeightArea / 3,
+                width: touchWidthArea / 3,
+              },
+            ]}
+          />
+        </View>
+      )}
     </>
   );
 };
