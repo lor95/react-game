@@ -90,98 +90,40 @@ export class SimpleCarControls {
           .normalize()
       );
 
-    //if (this.#keys["ArrowUp"]?.pressed) {
-    //  if (this.#keys["ArrowUp"]?.type === "keydown") {
-    //    if (
-    //      !this.#keys["ArrowDown"]?.pressed ||
-    //      this.#keys["ArrowDown"]?.type === "released"
-    //    ) {
-    //      if (this.#obj.linearSpeed <= this.#obj.topSpeed) {
-    //        this.#keys["ArrowDown"] = { pressed: false, type: "keyup" };
-    //        this.#obj.applyEngineForce(this.#obj.maxForce, 2);
-    //        this.#obj.applyEngineForce(this.#obj.maxForce, 3); // acceleration
-    //      } else {
-    //        this.#keys["ArrowUp"] = { pressed: false, type: "keyup" };
-    //        this.#keys["ArrowDown"] = { pressed: false, type: "keyup" };
-    //        this.#obj.applyEngineForce(0, 2);
-    //        this.#obj.applyEngineForce(0, 3);
-    //      }
-    //    }
-    //  } else if (this.#keys["ArrowUp"]?.type === "released") {
-    //    if (
-    //      !this.#keys["ArrowDown"]?.pressed ||
-    //      this.#keys["ArrowDown"]?.type === "released"
-    //    ) {
-    //      if (this.#obj.linearSpeed >= 0 && this.#angle < Math.PI / 2) {
-    //        this.#obj.applyEngineForce(-this.#obj.maxForce / 2, 2);
-    //        this.#obj.applyEngineForce(-this.#obj.maxForce / 2, 3); // acc pedal is up and brake pedal is up
-    //      } else {
-    //        this.#keys["ArrowUp"] = { pressed: false, type: "keyup" };
-    //        this.#keys["ArrowDown"] = { pressed: false, type: "keyup" };
-    //        this.#obj.applyEngineForce(0, 2);
-    //        this.#obj.applyEngineForce(0, 3);
-    //      }
-    //    } else if (this.#keys["ArrowDown"]?.type === "keydown") {
-    //      if (this.#obj.linearSpeed > 0.03) {
-    //        this.#obj.setBrake(this.#obj.brakeForce, 0);
-    //        this.#obj.setBrake(this.#obj.brakeForce, 1);
-    //        this.#obj.setBrake(this.#obj.brakeForce, 2);
-    //        this.#obj.setBrake(this.#obj.brakeForce, 3); // braking with no acc pedal down
-    //      } else {
-    //        this.#keys["ArrowUp"] = { pressed: false, type: "keyup" };
-    //        this.#keys["ArrowDown"] = { pressed: false, type: "keyup" };
-    //        this.#obj.applyEngineForce(0, 2);
-    //        this.#obj.applyEngineForce(0, 3); // vehicle stops
-    //      }
-    //    }
-    //  }
-    //} else if (this.#keys["ArrowDown"]?.pressed) {
-    //  console.log("no1")
-    //  if (this.#keys["ArrowDown"]?.type === "keydown") {
-    //    if (this.#obj.linearSpeed <= this.#obj.topReverseSpeed) {
-    //      this.#obj.applyEngineForce(-this.#obj.maxForce / 2, 2);
-    //      this.#obj.applyEngineForce(-this.#obj.maxForce / 2, 3); // acceleration
-    //    } else {
-    //      this.#keys["ArrowUp"] = { pressed: false, type: "keyup" };
-    //      this.#keys["ArrowDown"] = { pressed: false, type: "keyup" };
-    //      this.#obj.applyEngineForce(0, 2);
-    //      this.#obj.applyEngineForce(0, 3); // vehicle stops
-    //    }
-    //    // reverse acceleration
-    //  } else {
-    //    // slowly stop
-    //    if (this.#obj.linearSpeed >= 0 && this.#angle > Math.PI / 2) {
-    //      this.#obj.applyEngineForce(this.#obj.maxForce / 2, 2);
-    //      this.#obj.applyEngineForce(this.#obj.maxForce / 2, 3); // reverse pedal is up and brake pedal is up
-    //    } else {
-    //      this.#keys["ArrowUp"] = { pressed: false, type: "keyup" };
-    //      this.#keys["ArrowDown"] = { pressed: false, type: "keyup" };
-    //      this.#obj.applyEngineForce(0, 2);
-    //      this.#obj.applyEngineForce(0, 3);
-    //    }
-    //  }
-    //}
-    //console.log(this.#keys["ArrowUp"]);
-    //console.log(this.#keys["ArrowDown"]);
     if (this.#keys["ArrowUp"]) {
       if (this.#obj.linearSpeed <= this.#obj.topSpeed) {
         this.#obj.applyEngineForce(this.#obj.maxForce, 2);
         this.#obj.applyEngineForce(this.#obj.maxForce, 3);
-      } // acceleration
-      else {
-        {
-          this.#obj.applyEngineForce(0, 2);
-          this.#obj.applyEngineForce(0, 3);
-        } // acceleration
+      } else {
+        this.#obj.applyEngineForce(0, 2);
+        this.#obj.applyEngineForce(0, 3);
       }
     } else if (this.#keys["ArrowDown"]) {
-      this.#obj.setBrake(this.#obj.brakeForce, 0);
-      this.#obj.setBrake(this.#obj.brakeForce, 1);
-      this.#obj.setBrake(this.#obj.brakeForce, 2);
-      this.#obj.setBrake(this.#obj.brakeForce, 3); // braking with no acc pedal down
+      if (this.#angle < Math.PI / 2 && this.#obj.linearSpeed >= 0.03) {
+        this.#obj.applyEngineForce(0, 2);
+        this.#obj.applyEngineForce(0, 3);
+        this.#obj.setBrake(this.#obj.brakeForce, 0);
+        this.#obj.setBrake(this.#obj.brakeForce, 1);
+        this.#obj.setBrake(this.#obj.brakeForce, 2);
+        this.#obj.setBrake(this.#obj.brakeForce, 3);
+      } else if (this.#obj.linearSpeed <= this.#obj.topReverseSpeed) {
+        this.#obj.applyEngineForce(-this.#obj.maxForce / 2, 2);
+        this.#obj.applyEngineForce(-this.#obj.maxForce / 2, 3);
+      } else {
+        this.#obj.applyEngineForce(0, 2);
+        this.#obj.applyEngineForce(0, 3);
+      }
     } else {
-      this.#obj.applyEngineForce(0, 2);
-      this.#obj.applyEngineForce(0, 3);
+      if (this.#angle < Math.PI / 2 && this.#obj.linearSpeed >= 0.03) {
+        this.#obj.applyEngineForce(-this.#obj.maxForce / 4, 2);
+        this.#obj.applyEngineForce(-this.#obj.maxForce / 4, 3);
+      } else if (this.#angle > Math.PI / 2 && this.#obj.linearSpeed >= 0.03) {
+        this.#obj.applyEngineForce(this.#obj.maxForce / 4, 2);
+        this.#obj.applyEngineForce(this.#obj.maxForce / 4, 3);
+      } else {
+        this.#obj.applyEngineForce(0, 2);
+        this.#obj.applyEngineForce(0, 3);
+      }
     }
   };
 
