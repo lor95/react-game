@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Material, ContactMaterial, Plane, Body, Box, Vec3 } from "cannon";
 import { default as CannonDebugRenderer } from "../debug/CannonDebugRenderer";
+//import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import {
   Mesh,
   MeshStandardMaterial,
@@ -17,6 +18,7 @@ import {
   RepeatWrapping,
   sRGBEncoding,
   PlaneBufferGeometry,
+  BasicShadowMap,
   PCFShadowMap,
   Fog,
   Color,
@@ -127,21 +129,21 @@ const SimpleGameWindow = (props) => {
           let boxes = [];
           let boxMeshes = [];
           if (props.randomBoxes) {
-            var boxShape = new Box(new Vec3(1, 1, 1));
             for (var i = 0; i < 7; i++) {
-              var x = (Math.random() - 0.5) * 30;
-              var y = 1 + (Math.random() - 0.5) * 1;
-              var z = (Math.random() - 0.5) * 30;
               var boxBody = new Body({ mass: 0.1 });
-              boxBody.addShape(boxShape);
+              boxBody.addShape(new Box(new Vec3(1, 1, 1)));
               var boxMesh = new Mesh(
                 new BoxGeometry(2, 2, 2),
                 new MeshStandardMaterial({ color: "blue" })
               );
               props.world.addBody(boxBody);
               props.scene.add(boxMesh);
-              boxBody.position.set(x, y, z);
-              boxMesh.position.set(x, y, z);
+              boxBody.position.set(
+                (Math.random() - 0.5) * 30,
+                1 + (Math.random() - 0.5) * 1,
+                (Math.random() - 0.5) * 30
+              );
+              boxMesh.position.copy(boxBody.position);
               boxMesh.castShadow = true;
               boxMesh.receiveShadow = true;
               boxes.push(boxBody);
@@ -155,8 +157,8 @@ const SimpleGameWindow = (props) => {
           light.position.set(-50, 50, 50);
           light.castShadow = true;
           light.shadow.bias = 0.001;
-          light.shadow.mapSize.width = 512;
-          light.shadow.mapSize.height = 512;
+          light.shadow.mapSize.width = 2048;
+          light.shadow.mapSize.height = 2048;
           props.scene.add(light);
 
           try {
@@ -171,7 +173,11 @@ const SimpleGameWindow = (props) => {
 
           renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
           renderer.shadowMap.enabled = true;
-          renderer.shadowMap.type = PCFShadowMap;
+          if (Platform.OS === "web") {
+            renderer.shadowMap.type = PCFShadowMap;
+          } else {
+            renderer.shadowMap.type = BasicShadowMap;
+          }
 
           props.mainPlayer.camera.aspect =
             gl.drawingBufferWidth / gl.drawingBufferHeight;
@@ -207,14 +213,14 @@ const SimpleGameWindow = (props) => {
             );
             groundTexture.wrapS = RepeatWrapping;
             groundTexture.wrapT = RepeatWrapping;
-            groundTexture.repeat.set(10000, 10000);
-            groundTexture.anisotropy = 16;
+            groundTexture.repeat.set(100, 100);
+            groundTexture.anisotropy = 8;
             groundTexture.encoding = sRGBEncoding;
             const groundMaterial = new MeshStandardMaterial({
               map: groundTexture,
             });
             const groundMesh = new Mesh(
-              new PlaneBufferGeometry(10000, 10000),
+              new PlaneBufferGeometry(100, 100),
               groundMaterial
             );
             groundMesh.position.y = 0;
@@ -222,6 +228,11 @@ const SimpleGameWindow = (props) => {
             groundMesh.receiveShadow = true;
             props.scene.add(groundMesh);
           }
+          
+          //const controls = new OrbitControls(
+          //  props.mainPlayer.camera,
+          //  renderer.domElement
+          //);
 
           const animate = () => {
             setTimeout(function () {
@@ -238,7 +249,7 @@ const SimpleGameWindow = (props) => {
             }
 
             Boolean(debugRenderer) && debugRenderer.update();
-
+            //controls.update();
             renderer.render(props.scene, props.mainPlayer.camera);
             gl.endFrameEXP();
           };

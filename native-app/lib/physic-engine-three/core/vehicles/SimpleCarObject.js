@@ -9,7 +9,7 @@ import {
   ArrowHelper,
   Euler,
 } from "three";
-import { PhysicObject } from "..";
+import { PhysicObject } from "../PhysicObject";
 
 export class SimpleCarObject extends RaycastVehicle {
   constructor(
@@ -126,7 +126,7 @@ export class SimpleCarObject extends RaycastVehicle {
     this.maxForce = 50;
     this.brakeForce = 1;
     this.topSpeed = 13;
-    this.topReverseSpeed = 6
+    this.topReverseSpeed = 6;
 
     this.forwardArrow = new ArrowHelper(
       new Vector3(1, 0, 0).normalize(),
@@ -160,7 +160,6 @@ export class SimpleCarObject extends RaycastVehicle {
     }
     if (this.isCameraObject) {
       this.camera = new PerspectiveCamera(75, 1, 0.1, 1000);
-      console.log(this.chassisBody.position);
       this.camera.position.set(
         this.chassisShape.position.x - 8,
         4,
