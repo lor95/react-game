@@ -21,6 +21,7 @@ export class SimpleCarObject extends RaycastVehicle {
     chassisColor = "#ffffff",
     enableControls = false,
     isCameraObject = false,
+    cameraDistanceCoeff = 16,
     dimensions = {
       width: 1.3,
       height: 0.6,
@@ -159,10 +160,11 @@ export class SimpleCarObject extends RaycastVehicle {
       this.controls = new SimpleCarControls(this);
     }
     if (this.isCameraObject) {
+      this.cameraDistanceCoeff = cameraDistanceCoeff;
       this.camera = new PerspectiveCamera(75, 1, 0.1, 1000);
       this.camera.position.set(
-        this.chassisShape.position.x - 8,
-        4,
+        this.chassisShape.position.x - this.cameraDistanceCoeff,
+        this.cameraDistanceCoeff / 2,
         this.chassisShape.position.z
       );
       this.camera.lookAt(this.chassisShape.position);
@@ -190,6 +192,8 @@ export class SimpleCarObject extends RaycastVehicle {
         Math.pow(this.chassisBody.velocity.z, 2)
     );
 
+    //const oldPosition = this.chassisShape.position.clone();
+
     this.chassisShape.position.copy(this.chassisBody.position);
     this.chassisShape.quaternion.copy(this.chassisBody.quaternion);
     this.wheelInfos.forEach((wheel) => {
@@ -206,8 +210,8 @@ export class SimpleCarObject extends RaycastVehicle {
 
     if (this.isCameraObject) {
       this.camera.position.set(
-        this.chassisShape.position.x - 8,
-        4,
+        this.chassisShape.position.x - this.cameraDistanceCoeff,
+        this.cameraDistanceCoeff / 2,
         this.chassisShape.position.z
       );
     }
@@ -239,6 +243,12 @@ export class SimpleCarObject extends RaycastVehicle {
       this.controls.updateControls();
     }
 
+    //if (
+    //  oldPosition.x.toFixed(3) !== this.chassisShape.position.x.toFixed(3) ||
+    //  oldPosition.y.toFixed(3) !== this.chassisShape.position.y.toFixed(3) ||
+    //  oldPosition.z.toFixed(3) !== this.chassisShape.position.z.toFixed(3)
+    //) {
     callback();
+    //}
   };
 }

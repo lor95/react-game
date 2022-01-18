@@ -206,21 +206,21 @@ const SimpleGameWindow = (props) => {
             props.scene.add(props.mainPlayer.velocityArrow);
             debugRenderer = new CannonDebugRenderer(props.scene, props.world); // props.debugWindow element
           } else {
-            props.scene.fog = new Fog("#87ceeb", 1, 30);
+            props.scene.fog = new Fog("#87ceeb", 1, 70);
             props.scene.background = new Color("#87ceeb");
             const groundTexture = new TextureLoader().load(
               require("../resources/textures/ground.png")
             );
             groundTexture.wrapS = RepeatWrapping;
             groundTexture.wrapT = RepeatWrapping;
-            groundTexture.repeat.set(100, 100);
+            groundTexture.repeat.set(1000, 1000);
             groundTexture.anisotropy = 8;
             groundTexture.encoding = sRGBEncoding;
             const groundMaterial = new MeshStandardMaterial({
               map: groundTexture,
             });
             const groundMesh = new Mesh(
-              new PlaneBufferGeometry(100, 100),
+              new PlaneBufferGeometry(1000, 1000),
               groundMaterial
             );
             groundMesh.position.y = 0;

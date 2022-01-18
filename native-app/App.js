@@ -28,7 +28,8 @@ const player = new SimpleCarObject(
   new Quaternion().setFromAxisAngle(new Vec3(1, 0, 0), Math.PI / 2),
   defaultColors[Math.floor(Math.random() * defaultColors.length)],
   true,
-  true
+  true,
+  14
 );
 
 let players = [];
