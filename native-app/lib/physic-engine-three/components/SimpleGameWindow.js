@@ -25,10 +25,11 @@ import {
   BoxGeometry,
 } from "three";
 import { Renderer, TextureLoader } from "expo-three";
+import { TransparentTargetObject } from "../core";
 import { GLView } from "expo-gl";
 
 const styles = StyleSheet.create({
-  pointer: { position: "absolute", backgroundColor: "red", borderRadius: 200 },
+  pointer: { position: "absolute", backgroundColor: "#000", borderRadius: 200 },
   pointerContainer: {
     position: "absolute",
     backgroundColor: "#000",
@@ -183,14 +184,7 @@ const SimpleGameWindow = (props) => {
             gl.drawingBufferWidth / gl.drawingBufferHeight;
           props.mainPlayer.camera.updateProjectionMatrix();
 
-          props.scene.add(props.mainPlayer.chassisShape);
-          props.mainPlayer.wheelShapes.forEach((wheelShape) => {
-            props.scene.add(wheelShape);
-          });
-          props.mainPlayer.addToWorld(props.world);
-          props.mainPlayer.wheelBodies.forEach((wheel) => {
-            props.world.addBody(wheel);
-          });
+          props.mainPlayer.addToGame(props.scene, props.world);
 
           props.mainPlayer.enableBrowserStdControls();
 
@@ -228,11 +222,14 @@ const SimpleGameWindow = (props) => {
             groundMesh.receiveShadow = true;
             props.scene.add(groundMesh);
           }
-          
+
           //const controls = new OrbitControls(
           //  props.mainPlayer.camera,
           //  renderer.domElement
           //);
+
+          const target = new TransparentTargetObject();
+          target.addToGame(props.scene, props.world);
 
           const animate = () => {
             setTimeout(function () {

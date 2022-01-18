@@ -1,6 +1,6 @@
 import { Mesh } from "three";
 
-export class PhysicObject extends Mesh {
+export class MeshObject extends Mesh {
   constructor(geometry, material, referralBody) {
     super(geometry, material);
     this.castShadow = true;

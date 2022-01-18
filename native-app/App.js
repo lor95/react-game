@@ -77,15 +77,7 @@ export default function App() {
           _player.color
         );
         alreadySpawnedPlayer.setCommonId(socketId);
-        scene.add(alreadySpawnedPlayer.chassisShape);
-        alreadySpawnedPlayer.wheelShapes.forEach((wheelShape) => {
-          scene.add(wheelShape);
-        });
-
-        alreadySpawnedPlayer.addToWorld(world);
-        alreadySpawnedPlayer.wheelBodies.forEach((wheel) => {
-          world.addBody(wheel);
-        });
+        alreadySpawnedPlayer.addToGame(scene, world);
         alreadySpawnedPlayer.updatePosition();
         players.push(alreadySpawnedPlayer);
       });
@@ -99,15 +91,7 @@ export default function App() {
           player.color
         );
         spawnedPlayer.setCommonId(player.socketId);
-        scene.add(spawnedPlayer.chassisShape);
-        spawnedPlayer.wheelShapes.forEach((wheelShape) => {
-          scene.add(wheelShape);
-        });
-
-        spawnedPlayer.addToWorld(world);
-        spawnedPlayer.wheelBodies.forEach((wheel) => {
-          world.addBody(wheel);
-        });
+        spawnedPlayer.addToGame(scene, world);
         spawnedPlayer.updatePosition();
         players.push(spawnedPlayer);
       }

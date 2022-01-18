@@ -27,6 +27,9 @@ export class SimpleCarControls {
           break;
         case "ArrowDown":
           this.#keys["ArrowDown"] = true;
+          break;
+        case "KeyP":
+          this.#obj.resetPosition();
       }
     } else {
       switch (code) {

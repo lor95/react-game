@@ -9,7 +9,7 @@ import {
   ArrowHelper,
   Euler,
 } from "three";
-import { PhysicObject } from "../PhysicObject";
+import { MeshObject } from "../MeshObject";
 
 export class SimpleCarObject extends RaycastVehicle {
   constructor(
@@ -59,7 +59,7 @@ export class SimpleCarObject extends RaycastVehicle {
       initialQuaternion._z,
       initialQuaternion._w
     );
-    this.chassisShape = new PhysicObject(
+    this.chassisShape = new MeshObject(
       new BoxGeometry(
         dimensions.width * 2,
         dimensions.height * 2,
@@ -111,7 +111,7 @@ export class SimpleCarObject extends RaycastVehicle {
       wheelBody.quaternion.setFromAxisAngle(new Vec3(1, 0, 0), Math.PI / 2);
       this.wheelBodies.push(wheelBody);
       this.wheelShapes.push(
-        new PhysicObject(
+        new MeshObject(
           new CylinderGeometry(wheel.radius, wheel.radius, wheel.radius, 30),
           new MeshStandardMaterial({ color: "#000000" }),
           wheelBody
@@ -171,10 +171,31 @@ export class SimpleCarObject extends RaycastVehicle {
     }
   }
 
+  addToGame = (scene, world) => {
+    scene.add(this.chassisShape);
+    this.wheelShapes.forEach((wheelShape) => {
+      scene.add(wheelShape);
+    });
+    this.addToWorld(world);
+    this.wheelBodies.forEach((wheel) => {
+      world.addBody(wheel);
+    });
+  };
+
   enableBrowserStdControls = () => {
     if (this.enableControls) {
       this.controls.enableBrowserStdControls();
     }
+  };
+
+  resetPosition = () => {
+    // to fix
+    this.chassisBody.position.set(
+      this.chassisShape.position.x,
+      2,
+      this.chassisShape.position.z
+    );
+    this.chassisBody.quaternion.copy(new Quaternion(1, 0, 0, 1));
   };
 
   setCommonId(commonId) {
@@ -214,6 +235,7 @@ export class SimpleCarObject extends RaycastVehicle {
         this.cameraDistanceCoeff / 2,
         this.chassisShape.position.z
       );
+      this.camera.lookAt(this.chassisShape.position);
     }
 
     if (this.enableControls) {
