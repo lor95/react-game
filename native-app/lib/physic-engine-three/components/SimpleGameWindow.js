@@ -69,31 +69,25 @@ const SimpleGameWindow = (props) => {
             ? gesture.dy
             : pointerPanel.y._value,
       });
-      props.mainPlayer.controls.mobileControls(
-        {
-          x: pointerPanel.x._value,
-          y: pointerPanel.y._value,
-          width: touchWidthArea,
-          height: touchHeightArea,
-        },
-        true
-      );
+      props.mainPlayer.controls.mobileControls({
+        x: pointerPanel.x._value,
+        y: pointerPanel.y._value,
+        width: touchWidthArea,
+        height: touchHeightArea,
+      });
     },
     onPanResponderRelease: () => {
-      pointerPanel.flattenOffset();
       pointerPanel.setValue({
-        x: touchWidthArea / 3,
-        y: touchHeightArea / 3,
+        x: 0,
+        y: 0,
       });
-      props.mainPlayer.controls.mobileControls(
-        {
-          x: pointerPanel.x._value,
-          y: pointerPanel.y._value,
-          width: touchWidthArea,
-          height: touchHeightArea,
-        },
-        false
-      );
+      props.mainPlayer.controls.mobileControls({
+        x: 0,
+        y: 0,
+        width: touchWidthArea,
+        height: touchHeightArea,
+      });
+      pointerPanel.flattenOffset();
     },
   });
 

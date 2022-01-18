@@ -44,20 +44,20 @@ export class SimpleCarControls {
     }
   };
 
-  mobileControls = (data, isMoving) => {
-    if (data.y < -40) {
+  mobileControls = (data) => {
+    if (data.y < -data.height / 6) {
       this.#keys["ArrowDown"] = false;
       this.#keys["ArrowUp"] = true;
-    } else if (data.y > 40) {
+    } else if (data.y > data.height / 6) {
       this.#keys["ArrowUp"] = false;
       this.#keys["ArrowDown"] = true;
     } else {
       this.#keys["ArrowUp"] = false;
       this.#keys["ArrowDown"] = false;
     }
-    if (data.x < -40) {
+    if (data.x < -data.width / 6) {
       this.#handleControls({ code: "ArrowLeft", type: "keydown" });
-    } else if (data.x > 40) {
+    } else if (data.x > data.width / 6) {
       this.#handleControls({ code: "ArrowRight", type: "keydown" });
     } else {
       this.#handleControls({ code: "ArrowLeft", type: "keyup" });
