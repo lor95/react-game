@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { SimpleGameWindow } from "./lib/physic-engine-three/components";
 import { SOCKET_ENDPOINT } from "./config/socketConfig";
-import { View, Text, TouchableWithoutFeedback } from "react-native";
+import { View, Text } from "react-native";
 import { Scene, Quaternion } from "three";
 import { World, Vec3 } from "cannon";
 import { SimpleCarObject } from "./lib/physic-engine-three/core";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import socketIoClient from "socket.io-client";
 
 const defaultColors = [
@@ -19,6 +20,21 @@ const defaultColors = [
 const scene = new Scene();
 const world = new World();
 
+
+const loader = new OBJLoader();
+loader.load(
+  require("./lib/physic-engine-three/resources/models/test.obj"),
+  function (object) {
+    //scene.add(object);
+  },
+  function (xhr) {
+    console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+  },
+  function (error) {
+    console.log("An error happened");
+  }
+);
+
 const player = new SimpleCarObject(
   {
     x: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
@@ -29,7 +45,8 @@ const player = new SimpleCarObject(
   defaultColors[Math.floor(Math.random() * defaultColors.length)],
   true,
   true,
-  14
+  14,
+  obj
 );
 
 let players = [];
@@ -145,7 +162,7 @@ export default function App() {
       {Boolean(error) && <Text style={{ color: "red" }}>{error}</Text>}
       {Boolean(socket) && Boolean(socketId) && socket.connected && (
         <SimpleGameWindow
-          debugWindow={false}
+          debugWindow={true}
           mainPlayer={player}
           mainPlayerInit={playerInit}
           randomBoxes={false}

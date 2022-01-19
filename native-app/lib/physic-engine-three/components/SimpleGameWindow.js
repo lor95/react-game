@@ -228,8 +228,8 @@ const SimpleGameWindow = (props) => {
           //  renderer.domElement
           //);
 
-          const target = new TransparentTargetObject();
-          target.addToGame(props.scene, props.world);
+          //const target = new TransparentTargetObject();
+          //target.addToGame(props.scene, props.world);
 
           const animate = () => {
             setTimeout(function () {
@@ -237,7 +237,6 @@ const SimpleGameWindow = (props) => {
               props.world.step(1 / 30);
             }, 1000 / 30);
             props.mainPlayer.updatePosition(props.updateMainPlayer);
-
             if (props.randomBoxes) {
               for (var i = 0; i < boxes.length; i++) {
                 boxMeshes[i].position.copy(boxes[i].position);
