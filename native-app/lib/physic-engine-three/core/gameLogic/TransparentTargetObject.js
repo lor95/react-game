@@ -16,10 +16,6 @@ export class TransparentTargetObject {
 
     this.body.position.set(position.x, position.y, position.z);
     this.body.collisionResponse = 0;
-    
-    this.body.addEventListener("collide", (e) => {
-      console.log("collision");
-    });
 
     this.shape = new MeshObject(
       new BoxGeometry(0.5, 0.5, 0.5),
@@ -31,5 +27,10 @@ export class TransparentTargetObject {
   addToGame = (scene, world) => {
     scene.add(this.shape);
     world.addBody(this.body);
+  };
+
+  setPosition = (position) => {
+    this.body.position.set(position.x, position.y, position.z);
+    this.shape.position.copy(this.body.position);
   };
 }

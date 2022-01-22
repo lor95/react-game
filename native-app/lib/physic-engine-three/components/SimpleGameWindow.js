@@ -25,7 +25,6 @@ import {
   BoxGeometry,
 } from "three";
 import { Renderer, TextureLoader } from "expo-three";
-import { TransparentTargetObject } from "../core";
 import { GLView } from "expo-gl";
 
 const styles = StyleSheet.create({
@@ -227,9 +226,6 @@ const SimpleGameWindow = (props) => {
           //  props.mainPlayer.camera,
           //  renderer.domElement
           //);
-
-          //const target = new TransparentTargetObject();
-          //target.addToGame(props.scene, props.world);
 
           const animate = () => {
             setTimeout(function () {

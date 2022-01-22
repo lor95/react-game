@@ -190,12 +190,12 @@ export class SimpleCarObject extends RaycastVehicle {
 
   resetPosition = () => {
     // to fix
-    this.chassisBody.position.set(
-      this.chassisShape.position.x,
-      2,
-      this.chassisShape.position.z
-    );
-    this.chassisBody.quaternion.copy(new Quaternion(1, 0, 0, 1));
+    // this.chassisBody.position.set(
+    //   this.chassisShape.position.x,
+    //   2,
+    //   this.chassisShape.position.z
+    // );
+    // this.chassisBody.quaternion.copy(new Quaternion(1, 0, 0, 1));
   };
 
   setCommonId(commonId) {
@@ -270,7 +270,7 @@ export class SimpleCarObject extends RaycastVehicle {
     //  oldPosition.y.toFixed(3) !== this.chassisShape.position.y.toFixed(3) ||
     //  oldPosition.z.toFixed(3) !== this.chassisShape.position.z.toFixed(3)
     //) {
-    callback();
+    callback(this);
     //}
   };
 }

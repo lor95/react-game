@@ -12,7 +12,8 @@ const io = socketIo(server, {
 });
 
 const room = "stdroom";
-gameState = { stdroom: {} };
+let gameState = { stdroom: {} };
+let target = {};
 
 io.on("connection", (socket) => {
   console.log(`New connection from ${socket.id}`);
@@ -38,6 +39,19 @@ io.on("connection", (socket) => {
         io.to(socketId).emit("player_moved", { ...data, socketId: socket.id })
       );
     gameState[room][socket.id] = { ...gameState[room][socket.id], ...data };
+  });
+  socket.on("new_target_position", (data) => {
+    if (data.isNewTarget) {
+      delete target?.position;
+    }
+    if (Object.keys(target).length === 0) {
+      Object.keys(gameState[room]).forEach((socketId) =>
+        io.to(socketId).emit("new_target_spawned", { position: data.position })
+      );
+      target = { position: data.position };
+    } else {
+      socket.emit("new_target_spawned", target);
+    }
   });
 });
 

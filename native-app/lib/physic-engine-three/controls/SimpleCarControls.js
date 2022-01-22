@@ -28,8 +28,8 @@ export class SimpleCarControls {
         case "ArrowDown":
           this.#keys["ArrowDown"] = true;
           break;
-        case "KeyP":
-          this.#obj.resetPosition();
+        //case "KeyP":
+        //  this.#obj.resetPosition();
       }
     } else {
       switch (code) {

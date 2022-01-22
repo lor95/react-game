@@ -4,8 +4,8 @@ import { SOCKET_ENDPOINT } from "./config/socketConfig";
 import { View, Text } from "react-native";
 import { Scene, Quaternion } from "three";
 import { World, Vec3 } from "cannon";
-import { SimpleCarObject } from "./lib/physic-engine-three/core";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+import { RefereeObject, SimpleCarObject } from "./lib/physic-engine-three/core";
+//import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import socketIoClient from "socket.io-client";
 
 const defaultColors = [
@@ -20,20 +20,19 @@ const defaultColors = [
 const scene = new Scene();
 const world = new World();
 
-
-const loader = new OBJLoader();
-loader.load(
-  require("./lib/physic-engine-three/resources/models/test.obj"),
-  function (object) {
-    //scene.add(object);
-  },
-  function (xhr) {
-    console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
-  },
-  function (error) {
-    console.log("An error happened");
-  }
-);
+//const loader = new OBJLoader();
+//loader.load(
+//  require("./lib/physic-engine-three/resources/models/test.obj"),
+//  function (object) {
+//    //scene.add(object);
+//  },
+//  function (xhr) {
+//    console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+//  },
+//  function (error) {
+//    console.log("An error happened");
+//  }
+//);
 
 const player = new SimpleCarObject(
   {
@@ -45,9 +44,11 @@ const player = new SimpleCarObject(
   defaultColors[Math.floor(Math.random() * defaultColors.length)],
   true,
   true,
-  14,
-  obj
+  14
 );
+
+const referee = new RefereeObject();
+referee.target.addToGame(scene, world);
 
 let players = [];
 
@@ -75,6 +76,18 @@ export default function App() {
   useEffect(() => {
     if (Boolean(socketId)) {
       player.setCommonId(socketId);
+      referee.setCommonId(socketId);
+      referee.setCallback((targetObject, isNewTarget) => {
+        socket.emit("new_target_position", {
+          position: {
+            x: targetObject.target.shape.position.x,
+            y: targetObject.target.shape.position.y,
+            z: targetObject.target.shape.position.z,
+          },
+          isNewTarget,
+        });
+      });
+      referee.executeCallback();
     }
   }, [socketId]);
 
@@ -143,6 +156,10 @@ export default function App() {
       }
     });
 
+    socket.on("new_target_spawned", (data) => {
+      referee.target.setPosition(data.position);
+    });
+
     socket.connect();
   }
 
@@ -162,12 +179,12 @@ export default function App() {
       {Boolean(error) && <Text style={{ color: "red" }}>{error}</Text>}
       {Boolean(socket) && Boolean(socketId) && socket.connected && (
         <SimpleGameWindow
-          debugWindow={true}
+          debugWindow={false}
           mainPlayer={player}
           mainPlayerInit={playerInit}
           randomBoxes={false}
           scene={scene}
-          updateMainPlayer={() => {
+          updateMainPlayer={(player) => {
             socket.emit("player_move", {
               position: {
                 x: player.chassisShape.position.x,
