@@ -24,7 +24,7 @@ const world = new World();
 //loader.load(
 //  require("./lib/physic-engine-three/resources/models/test.obj"),
 //  function (object) {
-//    //scene.add(object);
+//    scene.add(object);
 //  },
 //  function (xhr) {
 //    console.log((xhr.loaded / xhr.total) * 100 + "% loaded");

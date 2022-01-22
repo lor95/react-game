@@ -24,15 +24,22 @@ import {
   Color,
   BoxGeometry,
 } from "three";
-import { Renderer, TextureLoader } from "expo-three";
+import { Renderer } from "expo-three";
 import { GLView } from "expo-gl";
+import { getTexture } from "../core";
+import { osName } from "expo-device";
 
 const styles = StyleSheet.create({
-  pointer: { position: "absolute", backgroundColor: "#000", borderRadius: 200 },
-  pointerContainer: {
+  pointer: {
     position: "absolute",
     backgroundColor: "#000",
-    opacity: 0.15,
+    opacity: 0.3,
+    borderRadius: 200,
+  },
+  pointerContainer: {
+    position: "absolute",
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+    borderRadius: 45,
   },
 });
 
@@ -92,12 +99,17 @@ const SimpleGameWindow = (props) => {
       pointerPanel.flattenOffset();
     },
   });
-
+  //if (Platform.OS === "web") {
+  //  const uri = copyAssetToCacheAsync( // to fix?
+  //    require("../resources/textures/ground.png"),
+  //    "ground.png"
+  //  );
+  //}
   return (
     <>
       <GLView
         style={{ flex: 1 }}
-        onContextCreate={(gl) => {
+        onContextCreate={async (gl) => {
           props.world.quatNormalizeSkip = 0;
           props.world.quatNormalizeFast = false;
           props.world.defaultContactMaterial.contactEquationStiffness = 1e128;
@@ -201,9 +213,7 @@ const SimpleGameWindow = (props) => {
           } else {
             props.scene.fog = new Fog("#87ceeb", 1, 70);
             props.scene.background = new Color("#87ceeb");
-            const groundTexture = new TextureLoader().load(
-              require("../resources/textures/ground.png")
-            );
+            const groundTexture = await getTexture("ground.png");
             groundTexture.wrapS = RepeatWrapping;
             groundTexture.wrapT = RepeatWrapping;
             groundTexture.repeat.set(1000, 1000);
@@ -248,7 +258,9 @@ const SimpleGameWindow = (props) => {
           animate();
         }}
       />
-      {Platform.OS !== "web" && (
+      {(Platform.OS !== "web" ||
+        osName.toLowerCase() === "android" ||
+        osName.toLowerCase() === "ios") && (
         <View
           style={[
             styles.pointerContainer,
