@@ -7,7 +7,7 @@ export class TransparentTargetObject {
     this.body = new Body({
       shape: new Box(new Vec3(0.25, 0.25, 0.25)),
     });
-    
+
     this.body.collisionResponse = 0;
 
     this.shape = new MeshObject(

@@ -1,5 +1,5 @@
-import React from "react";
-import { Platform } from "react-native";
+import React, { useState } from "react";
+import { Platform, View, Text } from "react-native";
 import { Material, ContactMaterial, Plane, Body, Box, Vec3 } from "cannon";
 import { default as CannonDebugRenderer } from "../debug/CannonDebugRenderer";
 //import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
@@ -25,8 +25,19 @@ import { osName } from "expo-device";
 import { SimplePhoneControls } from "./SimplePhoneControls";
 
 const SimpleGameWindow = (props) => {
+  const [score, setScore] = useState(props.mainPlayer.score);
   return (
     <>
+      <View
+        style={{
+          textAlign: "center",
+          paddingTop: 8,
+          paddingBottom: 8,
+          background: "transparent",
+        }}
+      >
+        <Text>Score: {score}</Text>
+      </View>
       <GLView
         style={{ flex: 1 }}
         onContextCreate={async (gl) => {
@@ -156,6 +167,10 @@ const SimpleGameWindow = (props) => {
           //  props.mainPlayer.camera,
           //  renderer.domElement
           //);
+          props.mainPlayer.setScoreUpdateFunction(() => {
+            props.mainPlayer.score += 1;
+            setScore(props.mainPlayer.score);
+          });
 
           const animate = () => {
             setTimeout(function () {
@@ -172,7 +187,6 @@ const SimpleGameWindow = (props) => {
 
             Boolean(debugRenderer) && debugRenderer.update();
             //controls.update();
-            console.log(props.mainPlayer.score);
             renderer.render(props.scene, props.mainPlayer.camera);
             gl.endFrameEXP();
           };

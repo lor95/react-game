@@ -9,7 +9,7 @@ export class RefereeObject {
 
     this.target.body.addEventListener("collide", (e) => {
       if (this.#triggerCollide && e.contact.bj.commonId === this.commonId) {
-        referralPlayer.score += 1;
+        referralPlayer.updateScore();
         this.#resetTargetPosition();
         this.executeCallback(true);
         this.#triggerCollide = false;

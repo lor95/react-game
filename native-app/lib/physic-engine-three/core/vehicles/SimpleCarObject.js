@@ -206,6 +206,10 @@ export class SimpleCarObject extends RaycastVehicle {
     this.wheelBodies.forEach((wheel) => (wheel.commonId = commonId));
   }
 
+  setScoreUpdateFunction = (updateFunction = () => {}) => {
+    this.updateScore = updateFunction;
+  };
+
   updatePosition = (callback = () => {}) => {
     this.linearSpeed = Math.sqrt(
       Math.pow(this.chassisBody.velocity.x, 2) +

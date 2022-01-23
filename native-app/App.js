@@ -179,7 +179,7 @@ export default function App() {
       {Boolean(error) && <Text style={{ color: "red" }}>{error}</Text>}
       {Boolean(socket) && Boolean(socketId) && socket.connected && (
         <SimpleGameWindow
-          debugWindow={true}
+          debugWindow={false}
           mainPlayer={player}
           mainPlayerInit={playerInit}
           randomBoxes={false}

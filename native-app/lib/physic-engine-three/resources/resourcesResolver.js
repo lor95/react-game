@@ -5,7 +5,7 @@ import { textureMap } from "./textures/textureMap";
 import { Platform } from "react-native";
 import constants from "expo-constants";
 
-async function copyAssetToCacheAsync(assetModule, localFilename) {
+const copyAssetToCacheAsync = async (assetModule, localFilename) => {
   const localUri = `${cacheDirectory}asset_${localFilename}`;
   const fileInfo = await getInfoAsync(localUri, { size: false });
   if (!fileInfo.exists) {
@@ -17,7 +17,7 @@ async function copyAssetToCacheAsync(assetModule, localFilename) {
     });
   }
   return localUri;
-}
+};
 
 export const getTexture = async (filename) => {
   let uri = textureMap[filename];

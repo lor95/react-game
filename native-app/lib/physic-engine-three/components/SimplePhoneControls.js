@@ -7,6 +7,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     opacity: 0.3,
     borderRadius: 200,
+    borderColor: "#fff",
+    borderWidth: 3,
   },
   pointerContainer: {
     position: "absolute",
