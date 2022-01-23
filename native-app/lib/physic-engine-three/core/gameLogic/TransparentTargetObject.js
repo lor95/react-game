@@ -3,18 +3,11 @@ import { Box, Body, Vec3 } from "cannon";
 import { MeshObject } from "../MeshObject";
 
 export class TransparentTargetObject {
-  constructor(
-    position = {
-      x: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
-      y: 0.4,
-      z: (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15),
-    }
-  ) {
+  constructor() {
     this.body = new Body({
       shape: new Box(new Vec3(0.25, 0.25, 0.25)),
     });
-
-    this.body.position.set(position.x, position.y, position.z);
+    
     this.body.collisionResponse = 0;
 
     this.shape = new MeshObject(

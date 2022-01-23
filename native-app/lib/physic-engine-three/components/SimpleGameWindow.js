@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Animated,
-  StyleSheet,
-  PanResponder,
-  Platform,
-} from "react-native";
+import { Platform } from "react-native";
 import { Material, ContactMaterial, Plane, Body, Box, Vec3 } from "cannon";
 import { default as CannonDebugRenderer } from "../debug/CannonDebugRenderer";
 //import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
@@ -28,83 +22,9 @@ import { Renderer } from "expo-three";
 import { GLView } from "expo-gl";
 import { getTexture } from "../core";
 import { osName } from "expo-device";
-
-const styles = StyleSheet.create({
-  pointer: {
-    position: "absolute",
-    backgroundColor: "#000",
-    opacity: 0.3,
-    borderRadius: 200,
-  },
-  pointerContainer: {
-    position: "absolute",
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
-    borderRadius: 45,
-  },
-});
+import { SimplePhoneControls } from "./SimplePhoneControls";
 
 const SimpleGameWindow = (props) => {
-  const touchWidthArea = 240;
-  const touchHeightArea = 240;
-  const rightMargin = 10;
-  const bottomMargin = 10;
-  const pointerPanel = new Animated.ValueXY();
-  pointerPanel.setValue({
-    x: touchWidthArea / 3,
-    y: touchHeightArea / 3,
-  });
-
-  const pointerPanelResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: () => {
-      pointerPanel.setOffset({
-        x: pointerPanel.x._value,
-        y: pointerPanel.y._value,
-      });
-      pointerPanel.setValue({
-        x: 0,
-        y: 0,
-      });
-    },
-    onPanResponderMove: (e, gesture) => {
-      pointerPanel.setValue({
-        x:
-          gesture.dx >= -touchWidthArea / 3 && gesture.dx <= touchWidthArea / 3
-            ? gesture.dx
-            : pointerPanel.x._value,
-        y:
-          gesture.dy >= -touchHeightArea / 3 &&
-          gesture.dy <= touchHeightArea / 3
-            ? gesture.dy
-            : pointerPanel.y._value,
-      });
-      props.mainPlayer.controls.mobileControls({
-        x: pointerPanel.x._value,
-        y: pointerPanel.y._value,
-        width: touchWidthArea,
-        height: touchHeightArea,
-      });
-    },
-    onPanResponderRelease: () => {
-      pointerPanel.setValue({
-        x: 0,
-        y: 0,
-      });
-      props.mainPlayer.controls.mobileControls({
-        x: 0,
-        y: 0,
-        width: touchWidthArea,
-        height: touchHeightArea,
-      });
-      pointerPanel.flattenOffset();
-    },
-  });
-  //if (Platform.OS === "web") {
-  //  const uri = copyAssetToCacheAsync( // to fix?
-  //    require("../resources/textures/ground.png"),
-  //    "ground.png"
-  //  );
-  //}
   return (
     <>
       <GLView
@@ -252,6 +172,7 @@ const SimpleGameWindow = (props) => {
 
             Boolean(debugRenderer) && debugRenderer.update();
             //controls.update();
+            console.log(props.mainPlayer.score);
             renderer.render(props.scene, props.mainPlayer.camera);
             gl.endFrameEXP();
           };
@@ -261,29 +182,7 @@ const SimpleGameWindow = (props) => {
       {(Platform.OS !== "web" ||
         osName.toLowerCase() === "android" ||
         osName.toLowerCase() === "ios") && (
-        <View
-          style={[
-            styles.pointerContainer,
-            {
-              right: rightMargin,
-              bottom: bottomMargin,
-              height: touchHeightArea,
-              width: touchWidthArea,
-            },
-          ]}
-        >
-          <Animated.View
-            {...pointerPanelResponder.panHandlers}
-            style={[
-              pointerPanel.getLayout(),
-              styles.pointer,
-              {
-                height: touchHeightArea / 3,
-                width: touchWidthArea / 3,
-              },
-            ]}
-          />
-        </View>
+        <SimplePhoneControls mainPlayer={props.mainPlayer} dimension={240} />
       )}
     </>
   );

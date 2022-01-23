@@ -47,7 +47,7 @@ const player = new SimpleCarObject(
   14
 );
 
-const referee = new RefereeObject();
+const referee = new RefereeObject(player);
 referee.target.addToGame(scene, world);
 
 let players = [];
@@ -179,7 +179,7 @@ export default function App() {
       {Boolean(error) && <Text style={{ color: "red" }}>{error}</Text>}
       {Boolean(socket) && Boolean(socketId) && socket.connected && (
         <SimpleGameWindow
-          debugWindow={false}
+          debugWindow={true}
           mainPlayer={player}
           mainPlayerInit={playerInit}
           randomBoxes={false}
