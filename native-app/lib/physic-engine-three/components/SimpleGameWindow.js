@@ -30,7 +30,8 @@ const SimpleGameWindow = (props) => {
     <>
       <View
         style={{
-          textAlign: "center",
+          justifyContent: "center",
+          alignItems: "center",
           paddingTop: 8,
           paddingBottom: 8,
           background: "transparent",

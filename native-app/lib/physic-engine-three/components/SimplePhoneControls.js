@@ -23,17 +23,21 @@ export const SimplePhoneControls = (props) => {
   const rightMargin = 10;
   const bottomMargin = 10;
   const pointerPanel = new Animated.ValueXY();
-  pointerPanel.setValue({
+  pointerPanel.setOffset({
     x: touchWidthArea / 3,
     y: touchHeightArea / 3,
+  });
+  pointerPanel.setValue({
+    x: 0,
+    y: 0,
   });
 
   const pointerPanelResponder = PanResponder.create({
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: () => {
       pointerPanel.setOffset({
-        x: pointerPanel.x._value,
-        y: pointerPanel.y._value,
+        x: touchWidthArea / 3,
+        y: touchHeightArea / 3,
       });
       pointerPanel.setValue({
         x: 0,
